@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#27895b">
+  <title>Go! · Allie's Playground</title>
+  <link rel="icon" href="../assets/stamps/star.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../runner/style.css">
+  <link rel="stylesheet" href="../shared/theme.css"><script defer src="../shared/core.js"></script><script defer src="../shared/app.js"></script>
+  <script defer src="../runner/core.js"></script>
+  <script defer src="../runner/renderer.js"></script>
+  <script defer src="../runner/app.js"></script>
+</head>
+<body>
+  <main>
+    <section id="selection" class="selection screen" aria-labelledby="game-title">
+      <header class="selection-header"><a href="../" class="back-link">‹ Home</a><button id="sound-menu" class="quiet" aria-pressed="true">Sound: On</button></header>
+      <div class="title-block"><span class="eyebrow">小小冒險，大大勇氣</span><h1 id="game-title">Go!</h1><p>選好夥伴，準備出發</p></div>
+      <div id="vehicles" class="vehicles" role="group" aria-label="選擇角色"></div>
+      <div class="journey"><span>♥ 3 顆生命</span><span>✦ 四大路線</span></div>
+      <p id="vehicle-detail" class="vehicle-detail" aria-live="polite"></p>
+      <button id="start" class="primary large">Play <span aria-hidden="true">▶</span></button>
+      <p class="help">按住方向移動。用另一隻手按加速或減速，<br>探索花園、戶外遊樂場、室內遊樂場與甜點街。</p>
+      <div class="menu-bottom"><button id="open-history" class="quiet">My Best</button><span id="menu-best">最佳 0 分</span></div>
+      <p id="storage-notice" class="notice" hidden role="status"></p>
+    </section>
+
+    <section id="play" class="play screen" hidden aria-label="避障遊戲">
+      <div class="play-shell">
+        <header class="hud">
+          <div class="hud-stat"><small>Score</small><strong id="score">0</strong></div>
+          <div class="hud-stat"><small>Distance</small><strong><span id="distance">0</span><small> m</small></strong></div>
+          <span id="lives" class="lives" aria-label="3 顆生命">♥♥♥</span>
+          <button id="pause" class="pause-button" aria-label="暫停遊戲">Ⅱ</button>
+        </header>
+        <div class="field">
+          <canvas id="game" width="480" height="640" role="img" aria-label="角色向前行進，使用下方按鍵左右閃避障礙物。">此遊戲需要支援 Canvas 的瀏覽器。</canvas>
+          <div class="field-labels"><span id="scene" class="scene-label">Garden</span><span id="power" class="power" hidden></span></div>
+          <div id="announcement" class="announcement" hidden></div>
+          <div id="countdown" class="countdown" hidden aria-live="polite"></div>
+        </div>
+        <div class="controls" role="group" aria-label="六鍵操作區">
+          <div class="hand left-hand"><button data-action="boost" aria-label="左側加速，按住生效"><span aria-hidden="true">↑</span> Fast</button><button data-action="brake" aria-label="左側減速，按住生效"><span aria-hidden="true">↓</span> Slow</button><button data-action="left" aria-label="向左，按住移動"><span aria-hidden="true">←</span><small>Left</small></button></div>
+          <div class="control-middle"><span id="speed-label">Go!</span><small>左右閃避<br>Go!</small></div>
+          <div class="hand right-hand"><button data-action="boost" aria-label="右側加速，按住生效"><span aria-hidden="true">↑</span> Fast</button><button data-action="brake" aria-label="右側減速，按住生效"><span aria-hidden="true">↓</span> Slow</button><button data-action="right" aria-label="向右，按住移動"><span aria-hidden="true">→</span><small>Right</small></button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="result screen" hidden aria-labelledby="result-title">
+      <a href="../" class="back-link">‹ Home</a>
+      <div class="celebration" aria-hidden="true"><span>✦</span><canvas id="result-art" width="200" height="150"></canvas><span>★</span></div>
+      <h1 id="result-title">Great job!</h1><p id="result-subtitle">每一次出發，都是新的冒險。</p>
+      <div class="result-stats"><div><small>Score</small><strong id="result-score">0</strong></div><div><small>Distance</small><strong id="result-distance">0 m</strong></div><div class="best-result"><small id="best-label">這位夥伴的最佳成績</small><strong id="result-best">0</strong></div></div>
+      <div class="result-actions"><button id="restart" class="primary large">↻ Again</button><button id="change-vehicle" class="secondary large">Pick a friend</button><a href="../" class="home-action">⌂ Home</a></div>
+      <p id="result-storage" class="help">紀錄保存在這台裝置</p>
+    </section>
+  </main>
+  <dialog id="pause-dialog" class="dialog pause-dialog" aria-labelledby="pause-title"><h2 id="pause-title">Pause</h2><p id="pause-reason">準備好再繼續冒險。</p><button id="resume" class="primary large">Go on</button><button id="sound-pause" class="quiet" aria-pressed="true">Sound: On</button><button id="quit" class="quiet">Done</button><p class="help">鍵盤：← → 移動、↑ 加速、↓ 減速<br>空白鍵／Esc 暫停</p></dialog>
+  <dialog id="history-dialog" class="dialog history-dialog" aria-labelledby="history-title"><div class="dialog-heading"><h2 id="history-title">My Best</h2><button id="close-history" class="quiet" aria-label="關閉紀錄">×</button></div><p class="help">依角色分別記錄最佳分數與最遠里程</p><div id="best-list" class="best-list"></div><h3>Last 20 Games</h3><ol id="history-list" class="history-list"></ol><p class="help">清除網站資料會移除紀錄，紀錄不會同步到其他裝置。</p><button id="clear-history" class="quiet danger">Clear Records</button></dialog>
+  <dialog id="reset-dialog" class="dialog" aria-labelledby="reset-title"><h2 id="reset-title">Clear records?</h2><p>最佳成績與最近紀錄都會清除。</p><div class="dialog-actions"><button id="cancel-reset" class="quiet">Keep</button><button id="confirm-reset" class="secondary">Clear</button></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

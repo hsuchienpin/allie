@@ -1,0 +1,52 @@
+[
+  {
+    "id": "star",
+    "name": "Star",
+    "path": "/assets/stamps/star.svg"
+  },
+  {
+    "id": "heart",
+    "name": "Heart",
+    "path": "/assets/stamps/heart.svg"
+  },
+  {
+    "id": "flower",
+    "name": "Flower",
+    "path": "/assets/stamps/flower.svg"
+  },
+  {
+    "id": "moon",
+    "name": "Moon",
+    "path": "/assets/stamps/moon.svg"
+  },
+  {
+    "id": "balloon",
+    "name": "Balloon",
+    "path": "/assets/stamps/balloon.svg"
+  },
+  {
+    "id": "crown",
+    "name": "Crown",
+    "path": "/assets/stamps/crown.svg"
+  },
+  {
+    "id": "bolt",
+    "name": "Bolt",
+    "path": "/assets/stamps/bolt.svg"
+  },
+  {
+    "id": "leaf",
+    "name": "Leaf",
+    "path": "/assets/stamps/leaf.svg"
+  },
+  {
+    "id": "music",
+    "name": "Music",
+    "path": "/assets/stamps/music.svg"
+  },
+  {
+    "id": "diamond",
+    "name": "Diamond",
+    "path": "/assets/stamps/diamond.svg"
+  }
+]

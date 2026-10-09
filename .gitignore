@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+artifacts/
+*.user
+__pycache__/
+*.pyc
+node_modules/
+.env
+.env.*
+playwright-report/
+test-results/

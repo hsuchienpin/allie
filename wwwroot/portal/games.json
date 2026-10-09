@@ -1,0 +1,59 @@
+[
+  {
+    "id": "studio",
+    "title": "Draw",
+    "category": "創意小天地",
+    "description": "畫畫、著色，貼上回憶貼紙。",
+    "href": "/studio/",
+    "action": "Play",
+    "art": "studio",
+    "theme": "coral",
+    "tags": [
+      "30 張圖卡",
+      "3 級難度"
+    ]
+  },
+  {
+    "id": "runner",
+    "title": "Go!",
+    "category": "冒險出發吧",
+    "description": "探索遊樂場，完成小小冒險。",
+    "href": "/runner/",
+    "action": "Play",
+    "art": "runner",
+    "theme": "green",
+    "tags": [
+      "4 種角色",
+      "雙手觸控"
+    ]
+  },
+  {
+    "id": "slice",
+    "title": "Slice",
+    "category": "驚喜切一切",
+    "description": "切開甜點，收集小驚喜。",
+    "href": "/slice/",
+    "action": "Play",
+    "image": "/slice/assets/cover.png",
+    "theme": "coral",
+    "tags": [
+      "3 個趣味主題",
+      "12 張動物貼紙",
+      "沒有扣分"
+    ]
+  },
+  {
+    "id": "bowling",
+    "title": "Bowl",
+    "category": "滾出大大快樂",
+    "description": "滾動彩球，撞倒可愛瓶子。",
+    "href": "/bowling/",
+    "action": "Play",
+    "image": "/bowling/assets/cover.png",
+    "theme": "coral",
+    "tags": [
+      "每局 3 球",
+      "一指操作"
+    ]
+  }
+]

@@ -1,0 +1,254 @@
+[
+  {
+    "id": "allie-unicorn",
+    "name": "Unicorn",
+    "imagePath": "/assets/cards/allie-unicorn.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "allie-jellyfish",
+    "name": "Jellyfish",
+    "imagePath": "/assets/cards/allie-jellyfish.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "allie-penguin",
+    "name": "Penguin",
+    "imagePath": "/assets/cards/allie-penguin.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "allie-balloons",
+    "name": "Balloons",
+    "imagePath": "/assets/cards/allie-balloons.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "allie-cotton",
+    "name": "Cotton Candy",
+    "imagePath": "/assets/cards/allie-cotton.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "allie-cakes",
+    "name": "Little Cakes",
+    "imagePath": "/assets/cards/allie-cakes.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "allie-candy",
+    "name": "Fruit Candy",
+    "imagePath": "/assets/cards/allie-candy.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "allie-ice",
+    "name": "Ice Cream",
+    "imagePath": "/assets/cards/allie-ice.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "allie-princess",
+    "name": "Rainbow Princess",
+    "imagePath": "/assets/cards/allie-princess.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "allie-flower-princess",
+    "name": "Flower Princess",
+    "imagePath": "/assets/cards/allie-flower-princess.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "allie-playhouse",
+    "name": "Playhouse",
+    "imagePath": "/assets/cards/allie-playhouse.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "allie-park",
+    "name": "Playground",
+    "imagePath": "/assets/cards/allie-park.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "turtle",
+    "name": "Turtle",
+    "imagePath": "/assets/cards/turtle.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "cat",
+    "name": "Cat",
+    "imagePath": "/assets/cards/cat.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "dog",
+    "name": "Dog",
+    "imagePath": "/assets/cards/dog.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "fish",
+    "name": "Fish",
+    "imagePath": "/assets/cards/fish.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "butterfly",
+    "name": "Butterfly",
+    "imagePath": "/assets/cards/butterfly.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "bunny",
+    "name": "Bunny",
+    "imagePath": "/assets/cards/bunny.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "whale",
+    "name": "Whale",
+    "imagePath": "/assets/cards/whale.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "dinosaur",
+    "name": "Dinosaur",
+    "imagePath": "/assets/cards/dinosaur.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "owl",
+    "name": "Owl",
+    "imagePath": "/assets/cards/owl.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "bear",
+    "name": "Bear",
+    "imagePath": "/assets/cards/bear.svg",
+    "difficultyLevel": 1
+  },
+  {
+    "id": "sailboat",
+    "name": "Sailboat",
+    "imagePath": "/assets/cards/sailboat.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "rocket",
+    "name": "Rocket",
+    "imagePath": "/assets/cards/rocket.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "train",
+    "name": "Train",
+    "imagePath": "/assets/cards/train.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "balloon",
+    "name": "Balloon",
+    "imagePath": "/assets/cards/balloon.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "tractor",
+    "name": "Tractor",
+    "imagePath": "/assets/cards/tractor.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "pond",
+    "name": "Pond",
+    "imagePath": "/assets/cards/pond.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "picnic",
+    "name": "Picnic",
+    "imagePath": "/assets/cards/picnic.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "beach",
+    "name": "Beach",
+    "imagePath": "/assets/cards/beach.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "robot",
+    "name": "Robot",
+    "imagePath": "/assets/cards/robot.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "icecream",
+    "name": "Icecream",
+    "imagePath": "/assets/cards/icecream.svg",
+    "difficultyLevel": 2
+  },
+  {
+    "id": "bakery",
+    "name": "Bakery",
+    "imagePath": "/assets/cards/bakery.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "farm",
+    "name": "Farm",
+    "imagePath": "/assets/cards/farm.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "aquarium",
+    "name": "Aquarium",
+    "imagePath": "/assets/cards/aquarium.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "castle",
+    "name": "Castle",
+    "imagePath": "/assets/cards/castle.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "playground",
+    "name": "Slide",
+    "imagePath": "/assets/cards/playground.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "space",
+    "name": "Space",
+    "imagePath": "/assets/cards/space.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "camper",
+    "name": "Camper",
+    "imagePath": "/assets/cards/camper.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "fruitshop",
+    "name": "Fruitshop",
+    "imagePath": "/assets/cards/fruitshop.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "garden",
+    "name": "Garden",
+    "imagePath": "/assets/cards/garden.svg",
+    "difficultyLevel": 3
+  },
+  {
+    "id": "lighthouse",
+    "name": "Lighthouse",
+    "imagePath": "/assets/cards/lighthouse.svg",
+    "difficultyLevel": 3
+  }
+]

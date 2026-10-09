@@ -1,0 +1,39 @@
+/* Run with a local Playwright installation. BASE_URL may be a GitHub Pages subpath.
+ * Test-only wrappers accelerate the original simulation; reward/storage code is unmodified.
+ */
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const base=(process.env.BASE_URL||'http://127.0.0.1:8765/').replace(/\/?$/,'/');
+const shots=process.env.SCREENSHOTS||'artifacts/browser';fs.mkdirSync(shots,{recursive:true});
+(async()=>{const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1180,height:820}});const page=await context.newPage(),errors=[];
+page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});
+async function go(path){await page.goto(base+path);await page.evaluate(()=>Allie.ready);}
+const inventory=()=>page.evaluate(async()=>Object.values(Allie.counts(await Allie.getState())).reduce((a,b)=>a+b,0));
+await go('bowling/');await page.waitForFunction(()=>!document.getElementById('start').disabled);
+await page.evaluate(()=>{const G=BowlingCore.Game;BowlingCore.Game=class extends G{constructor(o){super(o);window.testGame=this;}step(dt,r){for(let i=0;i<10;i++)super.step(dt,r);}};});
+await page.click('#start');await page.screenshot({path:shots+'/bowl-play.png'});for(let i=0;i<3;i++){await page.waitForFunction(()=>!document.getElementById('go').disabled);await page.click('#go');await page.waitForFunction(()=>window.testGame.state!=='rolling');}
+await page.waitForFunction(()=>!!document.querySelector('.allie-reward-image'));assert.equal(await inventory(),1);console.log('Bowl: completed three throws -> one sticker');
+await go('runner/');await page.waitForFunction(()=>!document.getElementById('start').disabled);await page.click('#start');await page.click('#pause');await page.click('#quit');assert.equal(await inventory(),1);console.log('Go: early finish -> no sticker');
+await page.evaluate(()=>{const G=RunnerCore.Game;RunnerCore.Game=class extends G{constructor(o){super(o);this.invincible=9999;window.testGame=this;}step(dt,c){for(let i=0;i<10;i++)super.step(dt,c);}};});
+await page.click('#restart');await page.waitForFunction(()=>window.testGame.elapsed>=31);await page.screenshot({path:shots+'/go-play.png'});await page.click('#pause');await page.click('#quit');await page.waitForFunction(()=>!!document.querySelector('.allie-reward-image'));assert.equal(await inventory(),2);console.log('Go: 31 simulation seconds -> one sticker');
+await go('slice/');await page.waitForFunction(()=>!document.getElementById('start').disabled);await page.evaluate(()=>{const G=SliceCore.Game;SliceCore.Game=class extends G{constructor(o){super(o);window.testGame=this;}};});await page.click('#start');await page.waitForFunction(()=>!!window.testGame);
+for(let i=0;i<20;i++){await page.evaluate(()=>{const g=window.testGame;g.objects=[];const o=g.spawn();o.x=o.homeX=g.width/2;o.y=g.height/2;o.vy=0;o.amplitude=0;});await page.locator('#game').press('Enter');await page.waitForTimeout(190);}
+await page.waitForSelector('#reward:visible');await page.click('#open-chest');await page.waitForFunction(()=>document.getElementById('open-chest').dataset.earned==='true');assert.equal(await inventory(),3);console.log('Slice: 20 actual input cuts -> one sticker');
+// The pending task is durable; reloading a awarded round cannot award again.
+await page.reload();await page.evaluate(()=>Allie.ready);assert.equal(await inventory(),3);
+await go('studio/');await page.waitForFunction(()=>document.querySelector('.allie-draft-status').textContent.includes('保存在'));await page.waitForSelector('.allie-sticker-choice');
+async function place(){await page.locator('.allie-sticker-choice').first().click();await page.locator('#sticker-layer').scrollIntoViewIfNeeded();const box=await page.locator('#sticker-layer').boundingBox();await page.mouse.click(box.x+box.width*.55,box.y+box.height*.4);await page.waitForFunction(async()=>Object.values(Allie.counts(await Allie.getState())).reduce((a,b)=>a+b,0)===2);}
+await place();await page.click('#undo');await page.waitForFunction(async()=>Object.values(Allie.counts(await Allie.getState())).reduce((a,b)=>a+b,0)===3);console.log('Draw: placement consumes one; undo refunds one');
+await place();
+await page.click('[data-transform="turn"]');await page.click('[data-transform="bigger"]');const before=await page.evaluate(async()=>Allie.getDraft(await Allie.lastDraft()));assert.equal(before.placements[0].size,180);assert.ok(before.placements[0].angle>0);
+await page.reload();await page.waitForFunction(()=>document.querySelector('.allie-draft-status').textContent.includes('已開啟'));const after=await page.evaluate(async()=>Allie.getDraft(await Allie.lastDraft()));assert.deepEqual(after.placements,before.placements);assert.equal(await inventory(),2);await page.screenshot({path:shots+'/draw.png',fullPage:true});console.log('Draw: reload restores consumed sticker and its transform');
+await page.click('#save');const download=page.waitForEvent('download');await page.click('[data-format="image/png"]');await (await download).saveAs(shots+'/picture.png');assert.equal(await inventory(),2);await page.locator('#export-dialog [data-close]').click();console.log('Draw: PNG download includes stickers without refund');
+// Two tabs claiming the same task serialize through IndexedDB.
+const second=await context.newPage();await second.goto(base+'stickers/');await second.evaluate(()=>Allie.ready);const task='bowling:browser-dedup';await Promise.all([page.evaluate(t=>Allie.reward(t,'bowling'),task),second.evaluate(t=>Allie.reward(t,'bowling'),task)]);assert.equal(await inventory(),3);
+const current=await page.evaluate(async()=>Allie.getDraft(await Allie.lastDraft()));await second.evaluate(d=>Allie.saveDraft(d,d.revision),current);const stale=await page.evaluate(async d=>{try{await Allie.saveDraft({...d,placements:[]},d.revision,true);return false;}catch(e){return e.message;}},current);assert.match(stale,/分頁/);assert.equal(await inventory(),3);console.log('Two tabs: duplicate claim adds one copy; stale draft rejected without refund');await second.close();
+for(const viewport of [{width:768,height:1024},{width:390,height:844}]){await page.setViewportSize(viewport);for(const path of ['','studio/','runner/','slice/','bowling/','stickers/']){await go(path);await page.waitForTimeout(500);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,path+' horizontal overflow');if(viewport.width===768)await page.screenshot({path:shots+'/'+(path.replace('/','')||'home')+'-tablet.png',fullPage:true});}}
+console.log('All six pages: tablet and phone layouts without horizontal overflow');
+// Shared preference survives both navigation and reload.
+await go('runner/');await page.waitForFunction(()=>document.getElementById('sound-menu').textContent==='Sound: On');await page.click('#sound-menu');await page.waitForFunction(async()=>!(await Allie.getState()).preferences.sound);await go('slice/');await page.waitForFunction(()=>!document.getElementById('sound-setting').checked);await go('bowling/');await page.waitForFunction(()=>document.querySelector('.sound-toggle').getAttribute('aria-pressed')==='false');console.log('Shared sound preference follows navigation');
+assert.deepEqual(errors,[]);await context.close();
+const blocked=await browser.newContext();await blocked.addInitScript(()=>Object.defineProperty(window,'indexedDB',{get(){throw Error('blocked');}}));const p=await blocked.newPage();await p.goto(base+'studio/');await p.waitForSelector('.allie-storage:visible');assert.equal(await p.locator('.allie-sticker-choice').count(),0);await blocked.close();console.log('Blocked storage: Chinese notice, no consumable placements');
+await browser.close();console.log('Browser integration PASS');})().catch(e=>{console.error(e);process.exit(1);});

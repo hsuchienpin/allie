@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#faf7ef">
+  <title>Draw · Allie's Playground</title>
+  <link rel="icon" href="../assets/stamps/star.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../shared/theme.css"><script defer src="../shared/core.js"></script><script defer src="../shared/app.js"></script><script defer src="../shared/studio.js"></script>
+  <script defer src="../vendor/jquery-3.7.1.min.js"></script>
+  <script defer src="../js/engine.js"></script>
+  <script defer src="../js/import-validator.js"></script>
+  <script defer src="../js/app.js"></script>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="../studio/" aria-label="小小畫室首頁"><span class="brand-icon">✿</span><span>Draw<small>ALLIE'S PLAYGROUND</small></span></a>
+    <span class="header-note">每一筆，都是小小的想像力。</span>
+    <div class="header-actions"><a href="../" class="park-link">‹ Home</a><span class="privacy-pill"><i></i>圖片留在這台裝置</span><button id="fullscreen" class="icon-button" aria-label="全螢幕" title="全螢幕">⛶</button></div>
+  </header>
+  <main class="workspace">
+    <aside class="gallery-panel">
+      <div class="panel-heading"><div><span class="eyebrow">LET'S COLOR</span><h1>Pick a picture!</h1></div><span class="tiny-flower">✳</span></div>
+      <p class="muted">選一張圖，讓它變得繽紛吧！</p>
+      <div id="difficulty-filter" class="difficulty-filter" role="group" aria-label="圖卡難度篩選">
+        <button data-level="0" class="active" aria-pressed="true">All</button><button data-level="1" aria-label="Level 1" aria-pressed="false">1</button><button data-level="2" aria-label="Level 2" aria-pressed="false">2</button><button data-level="3" aria-label="Level 3" aria-pressed="false">3</button>
+      </div>
+      <div class="gallery-caption"><span id="gallery-count">30 張小小靈感</span><span>挑一張 ↓</span></div>
+      <div id="gallery" class="gallery-grid" aria-label="內建圖卡"></div>
+      <button id="open-image" class="open-image"><span>＋</span><span>Open Picture<small>從這台裝置選擇，不會上傳</small></span></button>
+      <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+    </aside>
+    <section class="drawing-panel" aria-label="繪圖區">
+      <div class="drawing-heading"><div><span class="eyebrow">MY PICTURE</span><h2 id="card-title">Free Draw</h2></div><button id="start-drawing" class="primary">✎ Draw</button></div>
+      <div class="drawing-actions"><button id="undo" disabled aria-label="復原上一步">↶ <span>Undo</span></button><button id="clear">⌫ <span>Clear</span></button><button id="save" class="save-button">↓ <span>Save</span></button></div>
+      <div class="canvas-surround">
+        <span class="canvas-decoration decoration-one">✦</span><span class="canvas-decoration decoration-two">✳</span>
+        <div id="canvas-frame" class="canvas-frame"><canvas id="layer-bottom" width="1024" height="768" aria-label="繪圖畫布"></canvas><canvas id="layer-top" width="1024" height="768" aria-hidden="true"></canvas><span id="busy" hidden>正在準備小小畫布…</span></div>
+        <div class="canvas-footer"><span id="drawing-hint">用喜歡的顏色，把想像力畫出來！</span><span id="card-stars">Level 1</span></div>
+      </div>
+      <section class="palette-panel" aria-label="顏色與筆刷">
+        <div class="palette-label"><span id="current-color" class="current-color"></span><div><strong>Colors</strong><small id="color-name">Red</small></div><button id="palette-page" aria-label="切換另一組顏色">More Colors</button></div>
+        <div id="palette" class="palette" role="group" aria-label="36 色調色盤"></div>
+        <div class="brush-settings"><div id="brush-size" class="segmented" role="group" aria-label="筆刷粗細"><button data-size="8" aria-label="細筆" aria-pressed="false"><i style="width:8px;height:8px"></i>Small</button><button data-size="20" class="active" aria-label="中筆" aria-pressed="true"><i style="width:15px;height:15px"></i>Medium</button><button data-size="40" aria-label="粗筆" aria-pressed="false"><i style="width:23px;height:23px"></i>Big</button></div><div id="brush-material" class="segmented" role="group" aria-label="筆刷材質"><button data-material="pen" class="active" aria-pressed="true">Pen</button><button data-material="crayon" aria-pressed="false">Crayon</button><button data-material="pencil" aria-pressed="false">Pencil</button></div></div>
+      </section>
+    </section>
+    <aside class="tools-panel" aria-label="繪圖工具"><span class="eyebrow">TOOLS</span><div id="tools" class="tools"><button data-tool="pen" class="active" aria-pressed="true"><span>✎</span>Pen</button><button data-tool="fill" aria-pressed="false"><span>◒</span>Fill</button><button data-tool="stamp" aria-pressed="false"><span>★</span>Stamps</button></div><div id="stamp-picker" class="stamp-picker" hidden></div><div class="tool-divider"></div><button id="magic" class="magic-button"><span>✦</span>Ideas<small>給家長的提示詞工具</small></button><button id="free-draw" class="free-draw"><span>▧</span>New Paper</button><span class="tools-note">小手畫畫<br>大大創意 ♡</span></aside>
+  </main>
+  <footer class="site-footer"><span>✦ 不用帳號，不用上傳，盡情畫畫。</span><span>草稿會自動保存在這台裝置，也可以按 Save 下載作品。</span></footer>
+  <nav id="focus-controls" class="focus-controls" aria-label="畫畫操作" hidden><button id="focus-back">‹ Back</button><button id="focus-tools" aria-haspopup="dialog" aria-controls="tool-drawer" aria-expanded="false"><i id="focus-color"></i><span id="focus-tool-name">✎ Pen</span><span>Tools</span></button></nav>
+  <dialog id="tool-drawer" class="dialog tool-drawer" aria-labelledby="tool-drawer-title"><button class="dialog-close" data-close aria-label="收起工具">×</button><h2 id="tool-drawer-title">Tools</h2><div id="drawer-tools"></div><div id="drawer-palette"></div><div id="drawer-actions"></div><button id="drawer-done" class="primary">Go on →</button></dialog>
+  <dialog id="leave-dialog" class="dialog small-dialog" aria-labelledby="leave-title"><h2 id="leave-title">Go home?</h2><p>返回樂園前，記得存好作品。草稿保存在這台裝置，也可以先下載作品。</p><div class="leave-actions"><button id="leave-save" class="primary">↓ Save</button><button data-close>Go on</button><button id="leave-yes">Home</button></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="confirm-dialog" class="dialog small-dialog"><button class="dialog-close" data-close aria-label="關閉">×</button><span class="dialog-art">☁</span><h2 id="confirm-title">New picture?</h2><p id="confirm-message"></p><div class="dialog-actions"><button data-close>Go on</button><button id="confirm-yes" class="primary">OK</button></div></dialog>
+  <dialog id="magic-dialog" class="dialog magic-dialog"><button class="dialog-close" data-close aria-label="關閉">×</button><span class="eyebrow">A LITTLE IDEA, A BIG ADVENTURE</span><h2>Ideas</h2><p class="muted">複製提示詞，交給你自己的 AI，再把圖片帶回來畫。</p><div id="prompt-mode" class="segmented"><button data-mode="generate" class="active" aria-pressed="true">New Picture</button><button data-mode="photo" aria-pressed="false">From Photo</button></div><div id="themes" class="theme-picker" aria-label="提示詞主題"></div><label class="text-label">家長可以補充想畫的東西<input id="custom-topic" maxlength="120" placeholder="例如：一隻會飛的貓"></label><label class="text-label">Level<select id="prompt-difficulty"><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option></select></label><textarea id="prompt-output" rows="6" readonly aria-label="產生的提示詞"></textarea><p id="photo-note" class="notice" hidden>照片請在你自己的 AI 平台選取。本網站不接收照片，也不會替你傳送。</p><div class="instruction-strip"><span>① 複製提示詞</span><span>② 在自己的 AI 產圖並下載</span><span>③ 回來開啟圖片</span></div><div class="dialog-actions"><button id="magic-import">Open Picture</button><button id="copy-prompt" class="primary">Copy</button></div></dialog>
+  <dialog id="import-dialog" class="dialog import-dialog"><button class="dialog-close" data-close aria-label="關閉">×</button><span class="eyebrow">WELCOME TO YOUR CANVAS</span><h2>My Picture</h2><p class="muted">圖片只在這台裝置處理。一般照片不會自動變成 AI 卡通。</p><div class="preview-frame"><canvas id="import-preview" width="1024" height="768"></canvas></div><label class="range-label">Lines <input id="threshold" type="range" min="60" max="230" value="170"><span id="threshold-value">170</span></label><label class="check-label"><input id="repair-gaps" type="checkbox" checked>修補細小缺口（可能合併很靠近的線）</label><label class="text-label">Level（本機預估，可自行調整）<select id="import-difficulty"><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option></select></label><p class="notice">線稿若有大缺口，填色仍可能流出去；可以調整線條或改用畫筆。</p><div class="dialog-actions"><button data-close>Cancel</button><button id="use-import" class="primary">Draw</button></div></dialog>
+  <dialog id="export-dialog" class="dialog small-dialog"><button class="dialog-close" data-close aria-label="關閉">×</button><h2>Save your picture</h2><p class="muted">下載至裝置，不會保存到伺服器。</p><div class="dialog-actions"><button data-format="image/png" class="primary export-format">Save PNG</button><button data-format="image/jpeg" class="export-format">Save JPG</button></div><img id="export-preview" class="export-preview" alt="作品預覽" hidden><p id="export-help" class="muted" hidden>如果沒有開始下載，可長按圖片儲存。</p><button id="share-image" hidden>Share</button></dialog>
+</body>
+</html>

@@ -1,0 +1,5 @@
+(async function(){
+  const root=document.getElementById('inventory');let rendering=0;
+  async function render(){const ticket=++rendering;try{const state=await Allie.getState();if(ticket!==rendering)return;const counts=Allie.counts(state);const total=Object.values(counts).reduce((a,b)=>a+b,0);document.getElementById('summary').textContent=total?total+' stickers ready!':'Play a game to get your first sticker!';const fragment=document.createDocumentFragment();for(const item of Allie.catalog){if(item.atlas!=='new'&&!counts[item.id])continue;const card=document.createElement('div');card.className='sticker-card'+(!counts[item.id]?' allie-empty':'');const name=document.createElement('strong');name.textContent=item.name;const count=document.createElement('span');count.className='allie-count';count.textContent='× '+(counts[item.id]||0);card.append(Allie.stickerImage(item.id,item.name),name,count);fragment.append(card);}root.replaceChildren(fragment);}catch(error){document.getElementById('summary').textContent='無法讀取貼紙背包：'+error.message;}}
+  window.addEventListener('allie-change',render);window.addEventListener('pageshow',render);await render();
+})();

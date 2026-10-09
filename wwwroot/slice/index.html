@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#fff5dc">
+  <title>Slice · Allie's Playground</title>
+  <link rel="icon" href="../assets/stamps/star.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../slice/style.css?v=20261009-2">
+  <link rel="stylesheet" href="../shared/theme.css"><script defer src="../shared/core.js"></script><script defer src="../shared/app.js"></script>
+  <script defer src="../slice/core.js?v=20261009-2"></script>
+  <script defer src="../slice/renderer.js?v=20261009-2"></script>
+  <script defer src="../slice/app.js?v=20261009-2"></script>
+</head>
+<body>
+  <main>
+    <section id="menu" class="menu" aria-labelledby="title">
+      <header class="menu-header"><a href="../" class="icon-link" aria-label="返回小小遊戲樂園">⌂ <span>Home</span></a><button id="settings-open" class="icon-button" aria-label="遊戲設定">⚙</button></header>
+      <div class="title"><span class="eyebrow">滑一滑，驚喜就來啦</span><h1 id="title">Slice</h1><p>挑一個喜歡的小世界</p></div>
+      <div class="themes" role="group" aria-label="選擇遊戲主題">
+        <button class="theme fruit" data-theme="fruit" aria-pressed="true"><canvas width="300" height="240" aria-hidden="true"></canvas><strong>Candy</strong><small>造型軟糖與棉花糖</small><span class="chosen" aria-hidden="true">✓</span></button>
+        <button class="theme toys" data-theme="toys" aria-pressed="false"><canvas width="300" height="240" aria-hidden="true"></canvas><strong>Cakes</strong><small>可愛造型雞蛋糕</small><span class="chosen" aria-hidden="true">✓</span></button>
+        <button class="theme space" data-theme="space" aria-pressed="false"><canvas width="300" height="240" aria-hidden="true"></canvas><strong>Ice Pops</strong><small>霜淇淋與水果冰棒</small><span class="chosen" aria-hidden="true">✓</span></button>
+      </div>
+      <div class="pace" role="group" aria-label="選擇遊玩節奏"><button data-mode="gentle" aria-pressed="true">☁ Easy</button><button data-mode="happy" aria-pressed="false">✦ More</button></div>
+      <div class="menu-actions"><button id="start" class="primary" disabled>Loading…</button><button id="collection-menu" class="secondary" disabled>★ My Stickers</button></div>
+      <p id="loading" class="help" role="status">正在準備圖片與音效…</p><button id="retry" class="quiet" hidden>Try again</button>
+      <p id="storage-notice" class="notice" hidden role="status">這台裝置暫時無法保存紀錄，仍然可以開心玩。</p>
+      <p class="menu-note">沒有扣分，漏掉也沒關係。每一次滑動，都有小驚喜。</p>
+    </section>
+    <section id="play" class="play" hidden aria-label="切切樂遊戲">
+      <header class="hud"><div class="energy-wrap"><span aria-hidden="true">★</span><div class="energy-label"><small>Energy</small><div id="energy" class="energy" role="progressbar" aria-label="星星能量" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0"><div id="energy-fill"></div></div></div><span aria-hidden="true">★</span></div><button id="pause" class="icon-button" aria-label="暫停遊戲">Ⅱ</button><button id="sound-play" class="icon-button" aria-label="切換音效" aria-pressed="true">♫</button></header>
+      <div class="field"><canvas id="game" tabindex="0" role="img" aria-label="在物品上滑動切開。鍵盤可按 Enter 切開畫面中的物品，Esc 暫停。">此遊戲需要支援 Canvas 的瀏覽器。</canvas><p id="play-hint" class="play-hint">輕輕滑，就切開！</p>
+        <div id="reward" class="reward" hidden><h2 id="reward-title">Great job!</h2><button id="open-chest" class="chest-button" aria-label="打開寶箱"><canvas id="chest-art" width="340" height="300" aria-hidden="true"></canvas><span id="chest-instruction">Open</span></button><p id="sticker-name" hidden></p><div id="reward-actions" class="reward-actions" hidden><button id="continue" class="primary">Go on ▶</button><button id="collection-reward" class="secondary">★ My Stickers</button></div></div>
+      </div>
+    </section>
+  </main>
+  <dialog id="settings" aria-labelledby="settings-title"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button id="settings-close" class="icon-button" aria-label="關閉設定">×</button></div><label class="setting"><span>♫ Sound</span><input id="sound-setting" type="checkbox"></label><label class="setting"><span>☝ Tap to Slice</span><input id="tap-setting" type="checkbox"></label><p class="help">慢慢玩預設開啟；切換節奏時可再調整。</p><label class="setting"><span>✦ Vibration</span><input id="vibration-setting" type="checkbox"></label><p id="vibration-note" class="help">支援的裝置才會有震動回饋。</p><label class="setting"><span>☁ Soft Effects</span><input id="reduced-setting" type="checkbox"></label><p class="help">減少粒子與旋轉，彩虹軌跡仍會保留。</p><button id="settings-done" class="primary">OK</button></dialog>
+  <dialog id="pause-dialog" aria-labelledby="pause-title"><h2 id="pause-title">Pause ☁</h2><p id="pause-reason">準備好了，再繼續切切樂。</p><button id="resume" class="primary">Go on ▶</button><button id="sound-pause" class="secondary">Sound: On</button><button id="back-menu" class="quiet">Pick a theme</button><a href="../" class="quiet home-link">Home</a><p class="help">能量進度會保存；領到的貼紙放在共用背包。</p></dialog>
+  <dialog id="collection" class="collection-dialog" aria-labelledby="collection-title"><div class="dialog-heading"><h2 id="collection-title">My Stickers</h2><button id="collection-close" class="icon-button" aria-label="關閉貼紙收藏">×</button></div><p id="collection-count" class="help"></p><div id="sticker-grid" class="sticker-grid"></div><p id="record-summary" class="help"></p><p class="help">收藏保存在這台裝置。清除網站資料會移除收藏，也不會同步到其他裝置。</p><button id="collection-done" class="primary">Great!</button></dialog>
+  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+</body>
+</html>
