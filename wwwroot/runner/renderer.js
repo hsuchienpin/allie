@@ -38,7 +38,7 @@
     rounded(ctx, -12, -26, 24, 11, 6, '#825541');
   }
   function vehicle(ctx, id, x, y, scale = 1, time = 0, moving = false) {
-    const art=allieImages[{runner:'princess-rainbow',bicycle:'unicorn',motorcycle:'penguin',car:'princess-candy'}[id]]; if(art){ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);const w=id==='car'?66:54,h=id==='car'?84:78;ctx.drawImage(art,-w/2,-h/2,w,h);ctx.restore();return;}
+    const art=allieImages[{runner:'princess-rainbow',bicycle:'unicorn',motorcycle:'penguin',car:'princess-candy'}[id]]; if(art){ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);const size=id==='car'?84:78;ctx.drawImage(art,-size/2,-size/2,size,size);ctx.restore();return;}
     ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
     ctx.fillStyle = '#34463824'; ctx.beginPath(); ctx.ellipse(3, 8, id === 'car' ? 26 : 17, id === 'car' ? 37 : 26, 0, 0, Math.PI * 2); ctx.fill();
     if (id === 'runner') person(ctx, '#f58247', time, moving);

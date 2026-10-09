@@ -9,7 +9,7 @@
     "art": "studio",
     "theme": "coral",
     "tags": [
-      "30 張圖卡",
+      "42 張圖卡",
       "3 級難度"
     ]
   },
@@ -37,8 +37,8 @@
     "image": "/slice/assets/cover.png",
     "theme": "coral",
     "tags": [
-      "3 個趣味主題",
-      "12 張動物貼紙",
+      "3 個甜點主題",
+      "24 種共用貼紙",
       "沒有扣分"
     ]
   },
@@ -52,7 +52,7 @@
     "image": "/bowling/assets/cover.png",
     "theme": "coral",
     "tags": [
-      "每局 3 球",
+      "每局 3 或 5 球",
       "一指操作"
     ]
   }
