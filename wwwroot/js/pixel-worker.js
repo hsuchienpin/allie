@@ -1,4 +1,4 @@
-importScripts('/js/engine.js');
+importScripts('engine.js');
 self.onmessage = function ({ data }) {
   try {
     const rgba = new Uint8ClampedArray(data.rgba);

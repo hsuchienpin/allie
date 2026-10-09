@@ -4,4 +4,4 @@
 
 原有七種球道、碰撞與救援邏輯保留。球改成粉彩塑膠球，新增獨角獸氣球與水母目標，背景改為公主遊樂場。
 
-`little-game-park.bowling.v1` 仍保存選球、球數與遊玩紀錄。Reset Toys 重設該遊戲資料，共用貼紙與画室草稿保留，共用聲音偏好不重設。詳見 [PLAY_GUIDE.md](PLAY_GUIDE.md)。
+`little-game-park.bowling.v1` 仍保存選球、球數與遊玩紀錄。Reset Toys 重設該遊戲資料，共用貼紙與畫室草稿保留，共用聲音偏好不重設。詳見 [PLAY_GUIDE.md](PLAY_GUIDE.md)。

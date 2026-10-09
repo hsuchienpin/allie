@@ -8,7 +8,7 @@
 2. Slice：選 Candy、Cakes 或 Ice Pops。滑過物品切開；Easy 也可點一下。Energy 滿 20 後按 Open，取得一張貼紙。
 3. Bowl：按 Play，拖球瞄準再往前滑，也可按 GO!。完成 3 球或設定的 5 球，取得一張貼紙。
 4. My Stickers：查看共用背包。數字表示尚可使用的張數。
-5. Draw：選著色紙，Pen 畫畫、Fill 填色。Stickers 選圖案，再點画布貼上。
+5. Draw：選著色紙，Pen 畫畫、Fill 填色。Stickers 選圖案，再點畫布貼上。
 
 每張貼紙只能用一次。相同圖案若有兩張，就可以分別貼兩次。點選已貼圖案可拖動，用 Smaller／Bigger 調大小、Turn 旋轉，Done 回到畫筆。這些調整不再扣貼紙。Undo 復原到貼上之前，會把那張貼紙放回背包。
 

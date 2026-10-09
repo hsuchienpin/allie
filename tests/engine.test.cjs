@@ -83,3 +83,9 @@ test('bundled gallery has 42 different compositions, fourteen per difficulty, an
   assert.equal(new Set(bodies).size,42);
   assert.equal(fs.readdirSync(path.join(root,"assets/cards")).filter(f=>f.endsWith(".svg")).length,42);
 });
+test('drawing worker imports its engine relative to its own URL for project-site hosting',()=>{
+  const source=fs.readFileSync(path.join(__dirname,'../wwwroot/js/pixel-worker.js'),'utf8');
+  const requests=[];
+  require('node:vm').runInNewContext(source,{self:{},importScripts(...paths){requests.push(...paths.map(p=>new URL(p,'https://example.org/allies-playground/js/pixel-worker.js').pathname));}});
+  assert.deepEqual(requests,['/allies-playground/js/engine.js']);
+});
