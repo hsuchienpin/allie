@@ -2,7 +2,7 @@
 
 給 Allie 的獨角獸公主遊戲樂園。四個遊戲共用貼紙背包，英文操作、繁體中文說明；免登入，直接在瀏覽器遊玩。
 
-遊玩網址：https://hsuchienpin.github.io/allies-playground/
+遊玩網址：https://hsuchienpin.github.io/allie/
 
 | 入口 | 玩法 | 貼紙任務 |
 |---|---|---|
@@ -37,7 +37,7 @@ node --test tests/*.test.cjs
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` 在 main 更新時檢查 JavaScript、執行邏輯測試，再部署 `wwwroot`。GitHub Pages 發布來源設定為 GitHub Actions。所有入口、圖片與 Worker 都支援 `/allies-playground/` 子路徑。
+`.github/workflows/pages.yml` 在 main 更新時檢查 JavaScript、執行邏輯測試，再部署 `wwwroot`。GitHub Pages 發布來源設定為 GitHub Actions。所有入口、圖片與 Worker 都支援 `/allie/` 子路徑。公開網址改名後沿用原有裝置保存空間，既有貼紙與草稿仍可讀取。
 
 沒有圖片上傳、會員、外部 CDN、廣告或追蹤程式。自行匯入的照片和畫作在裝置處理；Ideas 只生成給家長複製的中文提示詞，不會呼叫 AI 或替使用者傳送照片。未實作離線重新開啟。
 

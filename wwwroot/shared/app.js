@@ -1,15 +1,17 @@
 (function() {
   'use strict';
   const base=new URL('../',document.currentScript.src), C=AllieCore;
+  // Retain the original storage namespace when the published project path is renamed.
+  const storagePath=base.pathname==='/allie/'?'/allies-playground/':base.pathname;
   const url=path=>new URL(String(path).replace(/^\//,''),base).href;
   let database, opening, unavailable=false;
-  const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('allie:'+base.pathname):null;
+  const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('allie:'+storagePath):null;
   function changed() { window.dispatchEvent(new Event('allie-change')); channel?.postMessage('change'); }
   if(channel) channel.onmessage=()=>window.dispatchEvent(new Event('allie-change'));
   function open() {
     if(opening) return opening;
     opening=new Promise((resolve,reject)=>{
-      const request=indexedDB.open('allie-playground:'+base.pathname,1);
+      const request=indexedDB.open('allie-playground:'+storagePath,1);
       request.onupgradeneeded=()=>{request.result.createObjectStore('data');};
       request.onsuccess=()=>{database=request.result;database.onversionchange=()=>database.close();resolve(database);};
       request.onerror=()=>reject(request.error); request.onblocked=()=>reject(Error('請關閉其他舊版分頁，再重新開啟。'));
