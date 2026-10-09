@@ -1,229 +1,58 @@
-(function (root, factory) {
+(function(root,factory){'use strict';const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.BowlingCore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.BowlingCore = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  'use strict';
-  const KEY = 'little-game-park.bowling.v1';
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const BALLS = [
-    { id: 'watermelon', name: 'Pink Ball', stars: 0, sprite: 0 },
-    { id: 'donut', name: 'Blue Ball', stars: 3, sprite: 1 },
-    { id: 'hedgehog', name: 'Mint Ball', stars: 6, sprite: 2 },
-    { id: 'magic', name: 'Rainbow Ball', stars: 10, sprite: 3 }
-  ];
-  const TARGETS = [
-    { id: 'pin', name: 'Happy Pins', stars: 0, sprite: 4 },
-    { id: 'alien', name: 'Balloons', stars: 4, sprite: 5 },
-    { id: 'castle', name: 'Castle', stars: 8, sprite: 6 },
-    { id: 'jelly', name: 'Jelly', stars: 12, sprite: 7 }
-  ];
-  const STICKERS = [
-    ['heart', '愛心', '♥'], ['star', '小星星', '★'], ['rainbow', '彩虹', '🌈'],
-    ['sun', '太陽', '☀'], ['watermelon', '西瓜', '🍉'], ['flower', '花朵', '🌼'],
-    ['butterfly', '蝴蝶', '🦋'], ['rocket', '火箭', '🚀'], ['castle', '城堡', '🏰'],
-    ['balloon', '氣球', '🎈'], ['donut', '甜甜圈', '🍩'], ['crown', '皇冠', '👑']
-  ];
-  const MODES = {
-    hundred: { name: 'Lots of Pins', hint: '一起滾出大大的快樂！' },
-    shapes: { name: 'Shapes', hint: '找一找，今天是什麼形狀？' },
-    ramp: { name: 'Jump!', hint: '飛起來，咻！' },
-    boost: { name: 'Fast!', hint: '踩到箭頭，飛快向前！' },
-    bumper: { name: 'Bounce!', hint: '彈一下，再彈一下！' },
-    giant: { name: 'Big Ball', hint: '大大的球，大大的驚喜！' },
-    monster: { name: 'Jelly Friend', hint: '讓大朋友搖搖晃晃！' }
-  };
-  const MASKS = {
-    '星星': ['0001000','1001001','0111110','0011100','0111110','0100010'],
-    '愛心': ['0110110','1111111','1111111','0111110','0011100','0001000'],
-    '笑臉': ['0111110','1000001','1010101','1000001','1011101','1000001','0111110'],
-    'A': ['00100','01010','10001','11111','10001','10001'],
-    'B': ['11110','10001','11110','10001','10001','11110'],
-    'C': ['01111','10000','10000','10000','10000','01111'],
-    '1': ['00100','01100','00100','00100','00100','01110'],
-    '2': ['01110','10001','00010','00100','01000','11111'],
-    '3': ['11110','00001','01110','00001','00001','11110']
-  };
-  function seededRandom(seed) {
-    let v = seed >>> 0;
-    return () => { v += 0x6D2B79F5; let t = v; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const KEY='little-game-park.bowling.v1',HALF_WIDTH=300,LENGTH=1450,BALL_RADIUS=58,PIN_RADIUS=29;
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const BALLS=[{id:'watermelon',name:'Pink Ball',sprite:0},{id:'donut',name:'Blue Ball',sprite:1},{id:'hedgehog',name:'Mint Ball',sprite:2},{id:'magic',name:'Purple Ball',sprite:3}];
+  const LEGACY_STICKERS=['heart','star','rainbow','sun','watermelon','flower','butterfly','rocket','castle','balloon','donut','crown'];
+  function seededRandom(seed){let v=seed>>>0;return()=>{v+=0x6D2B79F5;let t=v;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+  function frameComplete(index,rolls){if(index<9)return rolls[0]===10||rolls.length===2;return rolls.length===3||(rolls.length===2&&rolls[0]!==10&&rolls[0]+rolls[1]<10);}
+  function rackCapacity(index,rolls){if(!rolls.length)return 10;if(index<9)return 10-rolls[0];if(rolls.length===1)return rolls[0]===10?10:10-rolls[0];return rolls[0]!==10||rolls[1]===10?10:10-rolls[1];}
+  function marks(index,rolls){return rolls.map((n,i)=>{if(i>0&&((index<9&&i===1)||(index===9&&i===1&&rolls[0]<10)||(index===9&&i===2&&rolls[0]===10&&rolls[1]<10))&&rolls[i-1]+n===10)return '/';return n===10?'X':n===0?'−':String(n);});}
+  function scoreFrames(frames){let total=0,contiguous=true;const rows=frames.map((rolls,i)=>{let score=null;const future=frames.slice(i+1).flat();if(frameComplete(i,rolls)){if(i===9)score=rolls.reduce((a,b)=>a+b,0);else if(rolls[0]===10){if(future.length>=2)score=10+future[0]+future[1];}else if(rolls[0]+rolls[1]===10){if(future.length)score=10+future[0];}else score=rolls[0]+rolls[1];}if(score===null)contiguous=false;else if(contiguous)total+=score;return{rolls:rolls.slice(),marks:marks(i,rolls),score,total:contiguous?total:null};});return{rows,total,complete:frames.length===10&&frames.every((r,i)=>frameComplete(i,r))};}
+  class Scorecard{
+    constructor(){this.frames=Array.from({length:10},()=>[]);this.index=0;this.completed=false;}
+    get capacity(){return this.completed?0:rackCapacity(this.index,this.frames[this.index]);}
+    get scores(){return scoreFrames(this.frames);}
+    add(pins){if(this.completed||!Number.isInteger(pins)||pins<0||pins>this.capacity)throw Error('Invalid pinfall');const index=this.index,rolls=this.frames[index];rolls.push(pins);const roll=rolls.length,strike=pins===10&&(roll===1||index===9&&rackCapacity(index,rolls.slice(0,-1))===10),spare=roll>1&&marks(index,rolls).at(-1)==='/';const complete=frameComplete(index,rolls);if(complete){if(index===9)this.completed=true;else this.index++;}const newRack=complete||pins===10||index===9&&roll===2&&rolls[0]+rolls[1]===10;return{frame:index+1,roll,pins,strike,spare,frameComplete:complete,newRack,completed:this.completed};}
   }
-  function shuffle(list, random) {
-    const a = list.slice();
-    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    return a;
+  function makePins(random=Math.random){const pins=[];for(let row=0;row<4;row++)for(let col=0;col<=row;col++){const x=(col-row/2)*155,y=855+row*134.25;pins.push({id:pins.length,x,y,homeX:x,homeY:y,vx:0,vy:0,r:PIN_RADIUS,mass:1.6*(.97+random()*.06),down:false,rotation:0,spin:0,age:0});}return pins;}
+  // Gesture samples use lane coordinates, with y increasing toward the pins.
+  function shotFromGesture(samples){if(!Array.isArray(samples)||samples.length<2||!samples.every(p=>[p.x,p.y,p.t].every(Number.isFinite)))return null;const first=samples[0],last=samples.at(-1),dy=last.y-first.y,ms=last.t-first.t;if(dy<85||ms<20||ms>8000||last.y<Math.max(...samples.map(p=>p.y))-45)return null;const mid=samples[Math.floor((samples.length-1)/2)];let hook=0;if(mid.y-first.y>30&&last.y-mid.y>30){hook=clamp(((last.x-mid.x)/(last.y-mid.y)-(mid.x-first.x)/(mid.y-first.y))*90,-75,75);}return{angle:clamp(Math.atan2(last.x-first.x,dy),-.68,.68),speed:clamp(350+dy/ms*135,370,690),hook};}
+  function collide(a,b){const dx=b.x-a.x,dy=b.y-a.y,r=a.r+b.r,d=Math.hypot(dx,dy);if(d>=r)return;const nx=d?dx/d:0,ny=d?dy/d:1,ia=1/a.mass,ib=1/b.mass,penetration=r-d;
+    a.x-=nx*penetration*ia/(ia+ib);a.y-=ny*penetration*ia/(ia+ib);b.x+=nx*penetration*ib/(ia+ib);b.y+=ny*penetration*ib/(ia+ib);
+    const approach=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(approach>=0)return;const impulse=-(1+.24)*approach/(ia+ib);a.vx-=impulse*ia*nx;a.vy-=impulse*ia*ny;b.vx+=impulse*ib*nx;b.vy+=impulse*ib*ny;
   }
-  // Segment-circle distance catches accelerated balls between simulation steps.
-  function sweptHit(a, b, p, radius) {
-    const dx = b.x - a.x, dy = b.y - a.y, d = dx * dx + dy * dy;
-    const t = d ? clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / d, 0, 1) : 0;
-    return (a.x + t * dx - p.x) ** 2 + (a.y + t * dy - p.y) ** 2 <= radius * radius;
-  }
-  function makePins(mode, shape, random) {
-    const positions = [];
-    if (mode === 'monster') positions.push([0, 850]);
-    else if (mode === 'hundred') {
-      for (let row = 0; row < 10; row++) for (let col = 0; col < 10; col++) positions.push([(col - 4.5) * 43, 745 + row * 23]);
-    } else if (mode === 'shapes') {
-      const mask = MASKS[shape] || MASKS['愛心'];
-      // First mask row is the farthest row so symbols face the player correctly.
-      mask.forEach((row, i) => [...row].forEach((v, j) => { if (v === '1') positions.push([(j - (row.length - 1) / 2) * 65, 945 - i * 34]); }));
-    } else {
-      for (let row = 0; row < 6; row++) for (let col = 0; col <= row; col++) positions.push([(col - row / 2) * 68, 750 + row * 37]);
-    }
-    return positions.map(([x, y], id) => ({ id, x, y, homeX: x, homeY: y, down: false, chainAt: Infinity, vx: 0, vy: 0, z: 0, vz: 0, rotation: 0, spin: 0, age: 0, r: mode === 'monster' ? 72 : 20, phase: random() * 6.28 }));
-  }
-  class Game {
-    constructor(options = {}) {
-      this.random = options.random || Math.random;
-      this.count = options.count === 5 ? 5 : 3;
-      this.schedule = Array.isArray(options.schedule) ? options.schedule.filter(m => Object.hasOwn(MODES, m)) : null;
-      this.monsterRound = this.schedule ? this.schedule[0] === 'monster' : !options.firstAdventure && this.random() < .14;
-      this.bag = shuffle(['hundred','shapes','ramp','boost','bumper','giant'], this.random);
-      if (options.firstAdventure && !this.schedule) this.bag = ['hundred', ...this.bag.filter(m => m !== 'hundred')];
-      this.index = 0; this.ratios = []; this.totalKnocked = 0; this.monsterHP = this.count;
-      this.state = 'aim'; this.paused = false; this.completed = false; this.events = []; this.clock = 0;
-      this.setupShot();
-    }
-    setupShot() {
-      if (!this.bag.length) this.bag = shuffle(['hundred','shapes','ramp','boost','bumper','giant'], this.random);
-      this.mode = this.monsterRound ? 'monster' : this.schedule ? this.schedule[this.index % this.schedule.length] : this.bag.shift();
-      this.shape = Object.keys(MASKS)[Math.floor(this.random() * Object.keys(MASKS).length)];
-      this.pins = makePins(this.mode, this.shape, this.random);
-      this.ball = { x: 0, y: 80, vx: 0, vy: 0, r: this.mode === 'giant' ? 110 : 36, z: 0, rotation: 0 };
-      this.bumpers = this.mode === 'bumper' ? [{ x: -105, y: 370, r: 56, flash: 0 }, { x: 120, y: 545, r: 56, flash: 0 }] : [];
-      this.angle = 0; this.state = 'aim'; this.knocked = 0; this.rollTime = 0; this.effectsTime = 0;
-      this.slow = 0; this.boosted = false; this.jumped = false; this.assisted = false; this.rescued = false; this.monsterHit = false; this.firstImpact = false;
-      this.aimElapsed = 0; this.trail = []; this.events = [];
-    }
-    get title() { return MODES[this.mode].name + (this.mode === 'shapes' ? ' · ' + ({'星星':'Star','愛心':'Heart','笑臉':'Smile','箭頭':'Arrow','蝴蝶':'Butterfly','花朵':'Flower','月亮':'Moon','皇冠':'Crown','彩虹':'Rainbow'}[this.shape]||'Fun') : ''); }
-    get ratio() { return this.mode === 'monster' ? Number(this.monsterHit) : this.knocked / this.pins.length; }
-    get progress() { return clamp((this.ratios.reduce((a,b) => a+b, 0) + (['rolling','celebrate'].includes(this.state) ? this.ratio : 0)) / this.count, 0, 1); }
-    get stars() { const mean = this.ratios.reduce((a,b) => a+b, 0) / this.count; return 1 + Number(mean >= .5) + Number(mean >= .85); }
-    aim(value) { if (this.state === 'aim' && !this.paused && Number.isFinite(value)) this.angle = clamp(value, -1.06, 1.06); }
-    launch() {
-      if (this.state !== 'aim' || this.paused) return false;
-      this.ball.vx = Math.sin(this.angle) * 420; this.ball.vy = Math.cos(this.angle) * 420;
-      this.state = 'rolling'; this.events.push({ type: 'launch' }); return true;
-    }
-    knock(pin, power = 1) {
-      if (pin.down || this.mode === 'monster') return false;
-      pin.down = true; pin.chainAt = Infinity; this.knocked++; this.totalKnocked++;
-      pin.vx = (this.random() - .5) * 540 * power; pin.vy = (this.random() - .25) * 360;
-      pin.z = 2; pin.vz = 180 + this.random() * 240; pin.spin = (this.random() - .5) * 11; pin.age = 0;
-      this.events.push({ type: 'knock', x: pin.x, y: pin.y });
-      // Bounded propagation gives the hundred-pin firework a readable cascade.
-      const reach = this.mode === 'hundred' ? 76 : this.mode === 'giant' ? 160 : 84;
-      for (const other of this.pins) if (!other.down && Math.hypot(pin.homeX - other.homeX, pin.homeY - other.homeY) < reach) other.chainAt = Math.min(other.chainAt, this.effectsTime + .04 + this.random() * .1);
-      if (!this.firstImpact) { this.firstImpact = true; this.slow = .32; this.events.push({ type: 'impact' }); }
-      return true;
-    }
-    hitMonster() {
-      if (this.monsterHit) return;
-      this.monsterHit = true; this.monsterHP = Math.max(0, this.monsterHP - 1);
-      this.knocked = this.monsterHP === 0 ? 1 : 0; this.totalKnocked += this.knocked;
-      this.firstImpact = true; this.slow = .32;
-      this.events.push({ type: this.monsterHP === 0 ? 'monster-down' : 'monster-hit', x: 0, y: 850 });
-      if (!this.monsterHP) { const p = this.pins[0]; p.down = true; p.vz = 180; p.vx = 90; p.spin = 2; }
-    }
-    step(dt, reduced = false) {
-      if (!Number.isFinite(dt) || dt <= 0 || this.paused || this.state === 'result') return;
-      dt = Math.min(dt, 1 / 30); this.clock += dt;
-      if (this.state === 'aim') { this.aimElapsed += dt; return; }
-      if (this.state === 'next') return;
-      this.rollTime += dt;
-      const physicsDt = dt * (this.slow > 0 && !reduced ? .3 : 1);
-      this.slow = Math.max(0, this.slow - dt); this.effectsTime += physicsDt;
-      for (const p of this.pins) {
-        if (!p.down && p.chainAt <= this.effectsTime) this.knock(p);
-        if (p.down) {
-          p.age += dt; p.x += p.vx * physicsDt; p.y += p.vy * physicsDt;
-          p.vz -= 510 * physicsDt; p.z = Math.max(0, p.z + p.vz * physicsDt); p.rotation += p.spin * physicsDt;
-          if (p.z === 0) { p.vx *= .9; p.vy *= .9; p.spin *= .92; }
-        }
+  class Game{
+    constructor(options={}){this.random=options.random||Math.random;this.card=new Scorecard();this.startX=0;this.pins=makePins(this.random);this.state='aim';this.paused=false;this.completed=false;this.clock=0;this.events=[];this.lastRoll=null;this.setupBall();}
+    setupBall(){this.ball={x:this.startX,y:85,vx:0,vy:0,r:BALL_RADIUS,mass:8,rotation:0};this.gutter=false;this.hook=0;this.trail=[];this.rollTime=0;this.settleTime=0;this.beforeDown=this.pins.filter(p=>p.down).length;this.state='aim';}
+    get frame(){return this.state==='aim'?this.card.index+1:this.lastRoll&&this.state==='next'?this.lastRoll.frame:this.card.index+1;}
+    get roll(){return this.card.completed?this.lastRoll.roll:this.card.frames[this.card.index].length+1;}
+    get score(){return this.card.scores.total;}
+    get progress(){return this.completed?1:this.card.index/10;}
+    get standing(){return this.pins.filter(p=>!p.down).length;}
+    moveStart(x){if(this.state!=='aim'||this.paused||!Number.isFinite(x))return false;this.startX=clamp(x,-HALF_WIDTH+BALL_RADIUS+8,HALF_WIDTH-BALL_RADIUS-8);this.ball.x=this.startX;return true;}
+    launch(shot){if(this.state!=='aim'||this.paused||!shot||![shot.angle,shot.speed,shot.hook??0].every(Number.isFinite)||shot.speed<=0)return false;const angle=clamp(shot.angle,-.68,.68),speed=clamp(shot.speed,370,690);this.ball.vx=Math.sin(angle)*speed;this.ball.vy=Math.cos(angle)*speed;this.hook=clamp(shot.hook||0,-75,75);this.state='rolling';this.events.push({type:'launch'});return true;}
+    // A fallen pin occupies more floor space; only actual contact transfers momentum.
+    knock(pin){if(pin.down)return false;pin.down=true;pin.age=0;pin.spin=clamp(pin.vx/90,-5,5);pin.r=55;this.events.push({type:'knock',x:pin.x,y:pin.y});return true;}
+    physics(dt){const b=this.ball;for(const p of this.pins){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-1.6*dt);p.vy*=Math.exp(-1.6*dt);if(p.down){p.age+=dt;p.rotation+=p.spin*dt;p.spin*=Math.exp(-2*dt);}}
+      if(this.state==='rolling'){if(!this.gutter&&b.y>260)b.vx+=this.hook*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vx*=Math.exp(-.035*dt);b.vy*=Math.exp(-.035*dt);b.rotation+=Math.hypot(b.vx,b.vy)*dt/b.r;
+        if(!this.gutter&&Math.abs(b.x)>=HALF_WIDTH){this.gutter=true;b.x=Math.sign(b.x)*(HALF_WIDTH+42);b.vx=0;this.events.push({type:'gutter'});}
+        if(!this.gutter)for(const p of this.pins)if(p.y<LENGTH+100&&p.age<2.5)collide(b,p);
       }
-      if (this.state === 'celebrate') {
-        this.settle += dt;
-        if (this.settle > 1.65) this.finishShot();
-        return;
-      }
-      const b = this.ball, before = { x: b.x, y: b.y };
-      // Guidance happens before the pin deck, allowing bumpers to remain fun.
-      if (b.y > 620 && !this.firstImpact) {
-        const target = this.pins.reduce((best,p) => !p.down && (!best || Math.hypot(p.x-b.x,p.y-b.y) < Math.hypot(best.x-b.x,best.y-b.y)) ? p : best, null);
-        if (target) b.vx += clamp((target.x - b.x) * 4 - b.vx, -900 * physicsDt, 900 * physicsDt);
-        b.vy = Math.max(230, b.vy);
-      }
-      b.x += b.vx * physicsDt; b.y += b.vy * physicsDt; b.rotation += Math.hypot(b.vx,b.vy) * physicsDt / b.r;
-      const bound = 335 - b.r;
-      if (b.x < -bound || b.x > bound) { b.x = clamp(b.x, -bound, bound); b.vx = -b.vx * .88; b.vy = Math.max(b.vy, 230); this.events.push({ type: 'bounce' }); }
-      for (const bumper of this.bumpers) {
-        bumper.flash = Math.max(0, bumper.flash - dt);
-        if (sweptHit(before, b, bumper, b.r + bumper.r) && bumper.flash === 0) {
-          const dx = b.x-bumper.x, dy = b.y-bumper.y, len = Math.hypot(dx,dy) || 1;
-          b.x = bumper.x + dx / len * (b.r + bumper.r + 3);
-          b.y = bumper.y + dy / len * (b.r + bumper.r + 3);
-          b.vx = clamp(dx / len * 540, -500, 500); b.vy = Math.max(160, Math.abs(dy / len * 480)); bumper.flash = .25;
-          this.events.push({ type: 'spring' });
-        }
-      }
-      if (this.mode === 'boost' && b.y > 420 && !this.boosted) { this.boosted = true; b.vx *= 1.5; b.vy = Math.max(b.vy * 2, 700); this.events.push({ type: 'boost' }); }
-      if (this.mode === 'ramp' && b.y > 425 && !this.jumped) { this.jumped = true; this.jumpStart = this.effectsTime; this.events.push({ type: 'jump' }); }
-      if (this.jumped) { const t = this.effectsTime - this.jumpStart; b.z = t < 1.05 ? Math.max(0, 370*t - 350*t*t) : 0; }
-      for (const p of this.pins) if (!p.down && b.z < 82 && sweptHit(before, b, p, b.r + p.r)) {
-        if (this.mode === 'monster') this.hitMonster(); else this.knock(p, this.mode === 'giant' ? 1.4 : 1);
-      }
-      this.trail.push({ x: b.x, y: b.y, z: b.z }); if (this.trail.length > (reduced ? 8 : 28)) this.trail.shift();
-      // A finite rescue handles every angle/obstacle path, independent of luck.
-      if (!this.firstImpact && (this.rollTime > 5 || b.y > 1040)) {
-        const target = this.pins.find(p => !p.down);
-        if (target) { b.x = target.x; b.y = target.y; b.z = 0; this.assisted = true; if (this.mode === 'monster') this.hitMonster(); else this.knock(target); this.events.push({ type: 'rescue' }); }
-      }
-      if (this.firstImpact && (b.y > 1050 || this.rollTime > 6 || (this.mode === 'monster' && this.monsterHit))) { this.state = 'celebrate'; this.settle = 0; }
+      for(let i=0;i<this.pins.length;i++)for(let j=i+1;j<this.pins.length;j++){const a=this.pins[i],p=this.pins[j];if(a.age<2.5&&p.age<2.5&&(!a.down||!p.down||Math.hypot(a.vx,a.vy)+Math.hypot(p.vx,p.vy)>30))collide(a,p);}
+      for(const p of this.pins)if(!p.down&&Math.hypot(p.vx,p.vy)>105)this.knock(p);
     }
-    finishShot() {
-      if (this.state !== 'celebrate') return;
-      this.ratios.push(this.ratio); this.state = this.index + 1 >= this.count ? 'result' : 'next';
-      if (this.state === 'result') this.completed = true;
-      this.events.push({ type: this.completed ? 'result' : 'next' });
+    step(dt,reduced=false){if(!Number.isFinite(dt)||dt<=0||this.paused||this.state==='next'||this.state==='result')return;dt=Math.min(dt,1/30);this.clock+=dt;if(this.state==='aim')return;this.rollTime+=dt;const steps=Math.ceil(dt*120);for(let i=0;i<steps;i++)this.physics(dt/steps);
+      if(this.state==='rolling'){this.trail.push({x:this.ball.x,y:this.ball.y});if(this.trail.length>(reduced?8:22))this.trail.shift();if(this.ball.y>LENGTH+70||this.rollTime>=7){this.state='settle';this.settleTime=0;}}
+      else if(this.state==='settle'){this.settleTime+=dt;if((this.settleTime>1.1&&this.pins.every(p=>Math.hypot(p.vx,p.vy)<14))||this.settleTime>=2.5)this.finishRoll();}
     }
-    next() { if (this.state !== 'next' || this.paused) return false; this.index++; this.setupShot(); return true; }
-    drainEvents() { return this.events.splice(0); }
-    aimPath() {
-      const result = [{ x: 0, y: 80 }]; let x = 0, y = 80, vx = Math.sin(this.angle)*420, vy = Math.cos(this.angle)*420;
-      const bound = 335 - this.ball.r;
-      for (let i = 0; i < 20; i++) { x += vx * .09; y += vy * .09; if (x < -bound || x > bound) { x = clamp(x, -bound, bound); vx = -vx; } result.push({x,y}); if (y > 720) break; }
-      return result;
-    }
+    finishRoll(){if(this.state!=='settle')return;const count=this.pins.filter(p=>p.down).length-this.beforeDown;this.lastRoll={...this.card.add(count),gutter:this.gutter&&count===0};this.completed=this.card.completed;this.state=this.completed?'result':'next';this.events.push({type:this.completed?'result':'next',...this.lastRoll});}
+    next(){if(this.state!=='next'||this.paused)return false;if(this.lastRoll.newRack)this.pins=makePins(this.random);else this.pins=this.pins.filter(p=>!p.down).map(p=>({...p,vx:0,vy:0,rotation:0,spin:0,age:0}));this.setupBall();return true;}
+    drainEvents(){return this.events.splice(0);}
+    preview(shot){const points=[{x:this.startX,y:85}];if(!shot)return points;let x=this.startX,y=85,vx=Math.sin(shot.angle)*shot.speed,vy=Math.cos(shot.angle)*shot.speed;for(let i=0;i<12;i++){if(y>260)vx+=(shot.hook||0)*.05;x+=vx*.05;y+=vy*.05;points.push({x,y});if(Math.abs(x)>HALF_WIDTH)break;}return points;}
   }
-  function defaults() { return { version: 1, stars: 0, rounds: 0, stickers: [], ball: 'watermelon', target: 'pin', count: 3, sound: true, reduced: false }; }
-  function validProgress(raw) {
-    const p = defaults(); if (!raw || raw.version !== 1) return p;
-    for (const key of ['stars','rounds']) if (Number.isSafeInteger(raw[key]) && raw[key] >= 0) p[key] = Math.min(raw[key], 1000000);
-    p.stickers = Array.isArray(raw.stickers) ? [...new Set(raw.stickers.filter(id => STICKERS.some(s => s[0] === id)))].slice(0,12) : [];
-    for (const [key, list] of [['ball', BALLS], ['target', TARGETS]]) if (list.some(i => i.id === raw[key])) p[key] = raw[key];
-    p.count = raw.count === 5 ? 5 : 3;
-    p.sound = typeof raw.sound === 'boolean' ? raw.sound : true; p.reduced = raw.reduced === true; return p;
-  }
-  class Store {
-    constructor(storage) { this.storage = storage; this.available = true; this.claimed = new WeakSet(); this.error = '';
-      try { const raw = storage.getItem(KEY); this.data = validProgress(raw ? JSON.parse(raw) : null); }
-      catch (_) { this.data = defaults(); this.available = false; this.error = '紀錄暫存於目前頁面，關閉後可能消失。'; }
-    }
-    save() { try { this.storage.setItem(KEY, JSON.stringify(this.data)); this.available = true; this.error = ''; } catch (_) { this.available = false; this.error = '紀錄暫存於目前頁面，關閉後可能消失。'; } return this.available; }
-    select(key, id) { const list = key === 'ball' ? BALLS : key === 'target' ? TARGETS : []; if (!list.some(i => i.id === id && i.stars <= this.data.stars)) return false; this.data[key] = id; this.save(); return true; }
-    claim(game) {
-      if (!game.completed || this.claimed.has(game)) return null;
-      this.claimed.add(game);
-      const before = this.data.stars, stars = game.stars;
-      this.data.stars = Math.min(1000000, before + stars); this.data.rounds = Math.min(1000000, this.data.rounds + 1);
-      const sticker = STICKERS.find(s => !this.data.stickers.includes(s[0]));
-      if (sticker) this.data.stickers.push(sticker[0]);
-      const unlocked = [...BALLS, ...TARGETS].filter(i => i.stars > before && i.stars <= this.data.stars).map(i => i.name);
-      this.save(); return { stars, sticker: sticker || null, unlocked, collectionComplete: !sticker };
-    }
-    reset() { this.data = defaults(); this.save(); }
-  }
-  return { Game, Store, KEY, BALLS, TARGETS, STICKERS, MODES, MASKS, clamp, seededRandom, sweptHit, makePins, validProgress };
+  function defaults(){return{version:1,stars:0,rounds:0,stickers:[],ball:'watermelon',target:'pin',sound:true,reduced:false,best:0,lastScore:0};}
+  function validProgress(raw){const p=defaults();if(!raw||raw.version!==1)return p;for(const key of ['stars','rounds'])if(Number.isSafeInteger(raw[key])&&raw[key]>=0)p[key]=Math.min(raw[key],1000000);p.stickers=Array.isArray(raw.stickers)?[...new Set(raw.stickers.filter(id=>LEGACY_STICKERS.includes(id)))]:[];if(BALLS.some(i=>i.id===raw.ball))p.ball=raw.ball;for(const key of ['best','lastScore'])if(Number.isInteger(raw[key])&&raw[key]>=0&&raw[key]<=300)p[key]=raw[key];p.sound=typeof raw.sound==='boolean'?raw.sound:true;p.reduced=raw.reduced===true;return p;}
+  class Store{constructor(storage){this.storage=storage;this.available=true;this.error='';try{this.data=validProgress(JSON.parse(storage.getItem(KEY)||'null'));}catch(_){this.data=defaults();this.available=false;this.error='紀錄暫存於目前頁面，關閉後可能消失。';}}save(){try{this.storage.setItem(KEY,JSON.stringify(this.data));this.available=true;this.error='';}catch(_){this.available=false;this.error='紀錄暫存於目前頁面，關閉後可能消失。';}return this.available;}selectBall(id){if(!BALLS.some(b=>b.id===id))return false;this.data.ball=id;this.save();return true;}}
+  return{Game,Scorecard,scoreFrames,marks,frameComplete,shotFromGesture,makePins,Store,validProgress,KEY,BALLS,HALF_WIDTH,LENGTH,BALL_RADIUS,PIN_RADIUS,clamp,seededRandom};
 });

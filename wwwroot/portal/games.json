@@ -46,13 +46,13 @@
     "id": "bowling",
     "title": "Bowl",
     "category": "滾出大大快樂",
-    "description": "滾動彩球，撞倒可愛瓶子。",
+    "description": "滑動出球，挑戰十瓶保齡球。",
     "href": "/bowling/",
     "action": "Play",
     "image": "/bowling/assets/cover.png",
     "theme": "coral",
     "tags": [
-      "每局 3 或 5 球",
+      "一局 10 格",
       "一指操作"
     ]
   }

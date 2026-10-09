@@ -1,44 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#27895b">
-  <meta name="description" content="每局三球的趣味保齡球冒險，百瓶大亂鬥、彩虹球道與收藏貼紙。免登入，裝置端遊玩。">
-  <title>Bowl · Allie's Playground</title>
-  <link rel="icon" href="../assets/stamps/star.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../bowling/style.css">
-  <link rel="stylesheet" href="../shared/theme.css"><script defer src="../shared/core.js"></script><script defer src="../shared/app.js"></script>
-  <script defer src="../bowling/core.js"></script>
-  <script defer src="../bowling/renderer.js"></script>
-  <script defer src="../bowling/app.js"></script>
-</head>
-<body>
-  <main>
-    <section id="menu" class="screen menu" aria-labelledby="game-title">
-      <header class="topbar"><a class="wood" href="../">‹ Home</a><div class="top-actions"><button class="icon sound-toggle" aria-label="關閉音效" aria-pressed="true">♫</button><button id="settings-open" class="icon" aria-label="遊戲設定">⚙</button></div></header>
-      <div class="menu-content"><span class="eyebrow">Allie's Playground</span><h1 id="game-title">Bowl<br><span></span></h1><p class="tagline">小小一球，大大快樂！</p>
-        <canvas id="menu-art" width="800" height="320" aria-hidden="true"></canvas>
-        <button id="start" class="primary jumbo" disabled>Loading…</button>
-        <div class="menu-buttons"><button id="choose-ball" class="secondary">◉ Pick a ball</button><button id="stickers-open" class="gold">★ My Stickers</button></div>
-        <p id="round-hint" class="help">● ● ●　每次 3 球，快樂出發</p><p id="collection-summary" class="help"></p>
-      </div><p class="storage-notice notice" role="status" hidden></p>
-    </section>
-
-    <section id="play" class="screen play" hidden aria-label="保齡球遊戲">
-      <header class="hud"><span id="mode-title" class="mode-title">百瓶大亂鬥</span><div id="throws" class="throws" aria-label="第 1 球，共 3 球"></div><div class="star-progress"><progress id="star-progress" max="1" value="0" aria-label="這一局的完成進度"></progress><span aria-hidden="true">♡</span></div><div class="hud-actions"><button id="pause" class="icon" aria-label="暫停遊戲">Ⅱ</button><button class="icon sound-toggle" aria-label="關閉音效" aria-pressed="true">♫</button></div></header>
-      <div class="field"><canvas id="game" width="1000" height="650" aria-label="保齡球在下方，目標在上方。拖曳球瞄準，向前滑動或按 GO 發射。">請使用支援 Canvas 的瀏覽器。</canvas><div id="announcement" class="announcement" hidden aria-live="polite"></div><div id="monster-progress" class="monster-progress" hidden></div></div>
-      <div class="launch-bar"><span id="play-hint">拖曳球瞄準，再向前滑！</span><button id="go" class="secondary go">GO!</button><span id="shot-note">也可以直接按 GO</span></div>
-    </section>
-
-    <section id="result" class="screen result" hidden aria-labelledby="result-title"><header class="topbar"><a class="wood" href="../">‹ Home</a><button class="icon sound-toggle" aria-label="關閉音效" aria-pressed="true">♫</button></header><div class="result-content"><h1 id="result-title">Great job!</h1><canvas id="reward-art" width="520" height="260" aria-hidden="true"></canvas><p id="reward-stars" class="reward-stars"></p><div id="reward-sticker" class="sticker-reward"></div><p id="reward-unlocks" class="help"></p><div class="result-buttons"><button id="again" class="primary">↻ Again</button><button id="result-ball" class="secondary">◉ Pick a ball</button><button id="result-menu" class="wood">Back</button></div><p class="help">收藏留在這台裝置</p><p class="storage-notice notice" role="status" hidden></p></div></section>
-
-    <section id="collection" class="screen collection" hidden aria-labelledby="collection-title"><header class="topbar"><button id="collection-back" class="wood">‹ Back</button><span id="total-stars" class="total-stars"></span></header><div class="collection-content"><h1 id="collection-title">My Toys</h1><div class="tabs" role="tablist" aria-label="收藏種類"><button id="tab-ball" role="tab" aria-selected="true" aria-controls="collection-items" class="active" data-tab="ball">◉ Balls</button><button id="tab-target" role="tab" aria-selected="false" aria-controls="collection-items" data-tab="target">♟ Pins</button><button id="tab-sticker" role="tab" aria-selected="false" aria-controls="collection-items" data-tab="sticker">★ Stickers</button></div><div id="collection-items" class="items" role="tabpanel" aria-labelledby="tab-ball"></div><button id="use-selection" class="primary">Play</button><p id="collection-help" class="help"></p><p class="storage-notice notice" role="status" hidden></p></div></section>
-  </main>
-
-  <dialog id="pause-dialog" class="dialog" aria-labelledby="pause-title"><h2 id="pause-title">Pause</h2><p id="pause-reason">準備好再繼續玩。</p><button id="resume" class="primary">Go on</button><button class="sound-toggle wood" aria-pressed="true">♫ Sound</button><button id="motion-pause" class="wood" aria-pressed="false">Soft Effects</button><button id="quit" class="quiet">Back</button><p class="help">這一局完成後才會獲得收藏。</p></dialog>
-  <dialog id="settings-dialog" class="dialog" aria-labelledby="settings-title"><h2 id="settings-title">Settings</h2><fieldset><legend>Balls per game</legend><label><input type="radio" name="count" value="3" checked> 3 Balls</label><label><input type="radio" name="count" value="5"> 5 Balls</label></fieldset><label class="setting"><input id="motion" type="checkbox"> Soft Effects</label><p class="help">減少慢動作、震動與飛散星星。</p><button id="settings-close" class="primary">OK</button><p class="help">收藏不會同步到其他裝置。清除網站資料或關閉無痕視窗，可能失去紀錄。</p><button id="reset-open" class="quiet">Reset Toys</button></dialog>
-  <dialog id="reset-dialog" class="dialog" aria-labelledby="reset-title"><h2 id="reset-title">Reset toys?</h2><p>只重設保齡球的選擇與偏好，不會清除共用貼紙背包。</p><button id="reset-cancel" class="primary">Keep</button><button id="reset-confirm" class="secondary">Clear</button></dialog>
-  <div id="toast" class="toast" role="status" hidden></div>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#c49de4"><meta name="description" content="十瓶保齡球，一局10格，滑動出球、正常計分；完成一局可獲得共用貼紙。"><title>Bowl · Allie's Playground</title><link rel="icon" href="../assets/stamps/star.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="../shared/theme.css"><script defer src="../shared/core.js"></script><script defer src="../shared/app.js"></script><script defer src="core.js"></script><script defer src="renderer.js"></script><script defer src="app.js"></script></head><body><main>
+<section id="menu" class="screen menu"><header class="topbar"><a href="../" class="wood">‹ Home</a><button class="sound-toggle icon" aria-label="Sound" aria-pressed="true">♫</button></header><div class="menu-content"><span class="eyebrow">Allie's Playground</span><h1>Bowl</h1><p class="tagline" lang="zh-Hant">小小保齡球手，準備出發！</p><canvas id="menu-art" width="700" height="240" aria-hidden="true"></canvas><button id="start" class="primary jumbo" disabled>Loading…</button><div class="menu-buttons"><button id="choose-ball" class="secondary">Pick a ball</button><button id="stickers-open" class="secondary">My Stickers</button><button id="help-open" class="secondary">Help</button></div><p class="help" lang="zh-Hant">一局 10 格。完成整局，獲得一張貼紙。</p><p id="menu-best">Best: 0</p></div></section>
+<section id="play" class="screen play" hidden><header class="hud"><strong id="frame-label">Frame 1 / 10</strong><span id="roll-label">Roll 1 / 2</span><strong id="score-label">Score 0</strong><div class="hud-actions"><button id="pause" class="icon" aria-label="Pause">Ⅱ</button><button class="sound-toggle icon" aria-label="Sound" aria-pressed="true">♫</button></div></header><div id="scorecard" class="scorecard" aria-label="Score card"></div><div class="field"><canvas id="game" tabindex="0" aria-label="Bowling lane"></canvas><div id="announcement" class="announcement" aria-live="polite" hidden></div></div><div class="controls"><label for="start-position">Move <span aria-hidden="true">↔</span></label><input id="start-position" type="range" min="-234" max="234" value="0" step="1" aria-label="Start position"><strong id="shot-state" aria-live="polite">Swipe!</strong></div><p id="play-hint" class="help" lang="zh-Hant">左右拖球或拉動 Move 調整起點，再從球往前滑動出球。</p><p class="score-note" lang="zh-Hant">X 全倒加後兩球，/ 補中加後一球；… 表示等待加分。</p></section>
+<section id="result" class="screen menu" hidden><div class="menu-content"><h1>Well done!</h1><p id="final-score" class="final-score"></p><p id="final-best"></p><p lang="zh-Hant">完成 10 格，送你一張貼紙！</p><div id="reward-sticker"></div><button id="again" class="primary jumbo">Again</button><button id="result-menu" class="secondary">Home</button></div></section>
+<section id="collection" class="screen menu" hidden><div class="menu-content"><h1>Pick a ball</h1><p lang="zh-Hant">選喜歡的顏色，球的大小與力量都一樣。</p><div id="collection-items" class="items"></div><button id="collection-back" class="primary">OK</button></div></section>
+<p id="storage-notice" class="notice" lang="zh-Hant" role="status" hidden></p></main>
+<dialog id="help-dialog"><h2>Let's bowl!</h2><p lang="zh-Hant">先左右拖球或用 Move 調整起點，再從球往前滑動。滑的方向與力道決定球路，弧形滑動會轉彎；左右移動、輕點或往後滑不會出球。</p><p lang="zh-Hant">一局 10 格，每格最多兩球。第一球全倒是 X，加後兩球；第二球把剩下的瓶子全倒是 /，加後一球。第 10 格全倒可再投兩球，補中可再投一球，最高 300 分。</p><p lang="zh-Hant">球進溝後不會彈回；沒有撞倒瓶子就是 0 分。完成整局才會獲得一張貼紙。</p><button id="help-close" class="primary">OK</button></dialog>
+<dialog id="pause-dialog"><h2>Pause</h2><p lang="zh-Hant">休息一下，準備好再繼續。</p><button id="resume" class="primary">Play</button><button id="motion-pause" class="secondary" aria-pressed="false">Soft Effects: Off</button><button id="quit" class="secondary">Home</button><p lang="zh-Hant">離開未完成的一局，不會取得貼紙。</p></dialog></body></html>
