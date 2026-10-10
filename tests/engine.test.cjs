@@ -72,15 +72,16 @@ test('import rejects SVG, animated PNG, oversized dimensions and truncated files
   const svg=new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"></svg>');assert.throws(()=>inspect(svg.buffer),/PNG/);
   assert.throws(()=>inspect(new ArrayBuffer(10)),/圖片/);
 });
-test('bundled gallery has 42 different compositions, fourteen per difficulty, and ten local stamps', () => {
+test('bundled gallery has ten unique papers without difficulty and ten local stamps', () => {
   const root=path.join(__dirname,'../wwwroot'), gallery=JSON.parse(fs.readFileSync(path.join(root,'gallery.json'))),stamps=JSON.parse(fs.readFileSync(path.join(root,'stamps.json')));
-  assert.equal(gallery.length,42);assert.equal(new Set(gallery.map(c=>c.id)).size,42);
-  for(let level=1;level<=3;level++)assert.equal(gallery.filter(c=>c.difficultyLevel===level).length,14);
-  for(const c of [...gallery,...stamps]){const asset=c.imagePath||c.path;assert.ok(asset.startsWith('/assets/'));assert.ok(fs.existsSync(path.join(root,asset)));const svg=fs.readFileSync(path.join(root,asset),'utf8');assert.ok(!/https?:\/\/(?!www.w3.org)|<script|<image|<foreignObject/.test(svg));}
+  assert.equal(gallery.length,10);assert.equal(new Set(gallery.map(c=>c.id)).size,10);
+  assert.ok(gallery.every(c=>!('difficultyLevel' in c)));
+  assert.equal(gallery[0].id,'allie-unicorn');assert.equal(gallery[0].imagePath,'/assets/allie/v2/unicorn-line.webp');
+  for(const c of [...gallery,...stamps]){const asset=c.imagePath||c.path;assert.ok(asset.startsWith('/assets/'));assert.ok(fs.existsSync(path.join(root,asset)));if(asset.endsWith('.svg')){const svg=fs.readFileSync(path.join(root,asset),'utf8');assert.ok(!/https?:\/\/(?!www.w3.org)|<script|<image|<foreignObject/.test(svg));}}
   assert.equal(stamps.length,10);
-  assert.equal(new Set(gallery.map(c=>c.name)).size,42);
-  const bodies=gallery.map(c=>fs.readFileSync(path.join(root,c.imagePath),"utf8").replace(/<title>.*?<\/title>/,""));
-  assert.equal(new Set(bodies).size,42);
+  assert.equal(new Set(gallery.map(c=>c.name)).size,10);
+  const bodies=gallery.map(c=>require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,c.imagePath))).digest('hex'));
+  assert.equal(new Set(bodies).size,10);
   assert.equal(fs.readdirSync(path.join(root,"assets/cards")).filter(f=>f.endsWith(".svg")).length,42);
 });
 test('drawing worker imports its engine relative to its own URL for project-site hosting',()=>{

@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  if (window.AllieScreen?.isHost) return;
   const C = SliceCore, A = SliceArt, $ = id => document.getElementById(id);
   let storage; try { storage = window.localStorage; } catch (_) { storage = { getItem() { throw Error('Unavailable'); }, setItem() { throw Error('Unavailable'); } }; }
   const records = new C.Records(storage, matchMedia('(prefers-reduced-motion: reduce)').matches), settings = records.data.settings;
@@ -14,9 +15,7 @@
   function savePreferences(){Allie.preferences({sound:settings.sound,reduced:settings.reduced}).catch(()=>{});}
   function announce(text) { $('announcement').textContent = text; }
   function syncSettings() {
-    for (const b of document.querySelectorAll('[data-theme]')) b.setAttribute('aria-pressed', String(b.dataset.theme === settings.theme));
-    for (const b of document.querySelectorAll('[data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === settings.mode));
-    for (const k of ['sound','tap','vibration','reduced']) $(k + '-setting').checked = settings[k];
+    for (const k of ['sound','vibration','reduced']) $(k + '-setting').checked = settings[k];
     $('sound-play').setAttribute('aria-pressed', String(settings.sound)); $('sound-play').textContent = settings.sound ? '♫' : '♪̸';
     $('sound-play').setAttribute('aria-label', settings.sound ? '關閉音效' : '開啟音效');
     $('sound-pause').textContent = settings.sound ? 'Sound: On' : 'Sound: Off';
@@ -36,15 +35,14 @@
   }
   async function preload() {
     if (loading || ready) return; loading = true; $('retry').hidden = true; $('start').disabled = true;
-    $('loading').textContent = '正在準備所有主題、貼紙與音效…';
-    const images = Promise.all([loadImage('/assets/allie/stickers.webp'), loadImage('/slice/assets/stickers.png'), loadImage('/assets/allie/world.webp')]);
+    $('loading').textContent = '正在準備點心、貼紙與音效…';
+    const images = A.prepare();
     const soundResults = Promise.allSettled(sounds.map(loadSound));
     try {
-      const [atlas, stickers, forest] = await images; const results = await soundResults;
-      assets = A.prepare(atlas, stickers); renderer = new A.Renderer($('game'), assets, forest);
-      for (const b of document.querySelectorAll('[data-theme]')) renderer.theme(b.querySelector('canvas'), b.dataset.theme);
+      assets = await images; const results = await soundResults;
+      renderer = new A.Renderer($('game'), assets); renderer.menu($('slice-menu-art'));
       ready = true; $('start').disabled = false; $('collection-menu').disabled = false; $('start').textContent = records.data.pending ? 'Open' : 'Play';
-      $('loading').textContent = results.some(r => r.status === 'rejected') ? '圖片準備好了；部分音效未能載入，仍然可以玩。' : '準備好了！選個喜歡的主題，開始玩。';
+      $('loading').textContent = results.some(r => r.status === 'rejected') ? '圖片準備好了；部分音效未能載入，仍然可以玩。' : '準備好了！按 Play，滑動手指切開點心。';
     } catch (_) {
       await soundResults; $('loading').textContent = '圖片還沒準備好，請再試一次。'; $('retry').hidden = false; $('start').textContent = 'Loading…';
     } finally { loading = false; }
@@ -72,11 +70,11 @@
   function feedback() { if (canVibrate && settings.vibration) { try { navigator.vibrate(12); } catch (_) {} } }
   function updateHUD() {
     if (!game) return;
-    if (hudEnergy !== game.energy) { hudEnergy = game.energy; $('energy-fill').style.width = game.energy / C.TARGET * 100 + '%'; $('energy').setAttribute('aria-valuenow', String(game.energy)); }
+    if (hudEnergy !== game.energy) { hudEnergy = game.energy; $('energy-number').textContent=game.energy+' / 20'; $('energy-fill').style.width = game.energy / C.TARGET * 100 + '%'; $('energy').setAttribute('aria-valuenow', String(game.energy)); }
     const rewarding = game.state === 'chest' || game.state === 'reveal';
     if ($('play-hint').hidden !== rewarding) $('play-hint').hidden = rewarding;
     if ($('pause').disabled !== rewarding) $('pause').disabled = rewarding;
-    const hint = game.objects.some(o => o.type === 'balloon') ? '大氣球來啦！來回滑幾下！' : settings.tap ? '輕輕滑，點一下也可以！' : '輕輕滑，就切開！';
+    const hint = game.objects.some(o => o.type === 'balloon') ? '大氣球來啦！來回滑幾下！' : '輕輕滑，就切開！';
     if ($('play-hint').textContent !== hint) $('play-hint').textContent = hint;
   }
   function showChest() {
@@ -91,7 +89,7 @@
     for (const e of game.takeEvents()) {
       if (e.kind === 'slice') {
         records.slice(e.energy); savedNotice(); feedback();
-        sound(e.balloon ? 'burst' : settings.theme === 'toys' ? 'cheer' : settings.theme === 'space' ? 'pop' : 'slice');
+        sound(e.balloon ? 'burst' : C.materialFor(e.object.type) === 'cake' ? 'cheer' : C.materialFor(e.object.type) === 'ice' ? 'pop' : 'slice');
       } else if (e.kind === 'balloonHit') { sound('progress'); feedback(); }
       else if (e.kind === 'chest') { showChest(); sound('chest'); }
     }
@@ -103,7 +101,7 @@
     await unlockAudio();
     $('menu').hidden = true; $('play').hidden = false;document.body.classList.add('playing'); $('reward').hidden = true;
     renderer.resize(); orientation = innerWidth > innerHeight;
-    game = new C.Game({ theme: settings.theme, mode: settings.mode, reduced: settings.reduced, energy: records.data.energy, width: renderer.w, height: renderer.h });
+    game = new C.Game({ reduced: settings.reduced, energy: records.data.energy, width: renderer.w, height: renderer.h });
     renderer.clearTrails(); last = 0;
     if (records.data.pending) { game.energy = C.TARGET; showChest(); }
     else { records.start(); savedNotice(); $('game').focus(); announce('開始切切樂，輕輕滑動切開物品。'); }
@@ -146,7 +144,6 @@
   });
   $('game').addEventListener('pointerup', e => {
     const p = pointers.get(e.pointerId); if (!p || !game) return; move(e);
-    if (settings.tap && p.distance < 12 && game.state === 'running') { const at = point(e); game.tap(at.x, at.y); renderer.trail({ x: at.x - 12, y: at.y + 10 }, { x: at.x + 12, y: at.y - 10 }, performance.now() / 1000); events(); }
     pointers.delete(e.pointerId); game.release(e.pointerId);
   });
   for (const name of ['pointercancel','lostpointercapture']) $('game').addEventListener(name, e => { pointers.delete(e.pointerId); if (game) game.release(e.pointerId); });
@@ -162,7 +159,7 @@
     $('open-chest').disabled=true;
     try { const earned=await Allie.reward(records.data.rewardEpoch+':'+pending.id,'slice'); reveal={fresh:true}; records.data.pending=null;save(); game.state='reveal';$('chest-instruction').hidden=true;$('reward-title').textContent='A new sticker!';$('sticker-name').hidden=true;$('reward-actions').hidden=false;
       const image=await Allie.sticker(earned.type),canvas=$('chest-art'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,(canvas.width-240)/2,0,240,240);$('open-chest').dataset.earned='true';
-      const item=Allie.catalog.find(i=>i.id===earned.type);$('sticker-name').textContent=item.name+' · 已放進共用貼紙背包';$('sticker-name').hidden=false;sound('cheer');feedback();savedNotice();$('continue').focus();
+      $('use-sticker').href=Allie.url('studio/?sticker='+encodeURIComponent(earned.type));const item=Allie.catalog.find(i=>i.id===earned.type);$('sticker-name').textContent=item.name+' · 已放進共用貼紙背包';$('sticker-name').hidden=false;sound('cheer');feedback();savedNotice();$('continue').focus();
     } catch(error) {$('open-chest').disabled=false;announce('貼紙未能保存，請再按 Open 試一次。');$('sticker-name').textContent=error.message;$('sticker-name').hidden=false;}
 
   });
@@ -171,9 +168,7 @@
     pending = null; reveal = null; $('reward').hidden = true; game.nextRound(); records.data.energy = 0; save(); last = 0; updateHUD(); $('game').focus();
   });
   function collection() { window.location.assign(Allie.url('stickers/')); }
-  for (const b of document.querySelectorAll('[data-theme]')) b.addEventListener('click', () => { settings.theme = b.dataset.theme; syncSettings(); save(); });
-  for (const b of document.querySelectorAll('[data-mode]')) b.addEventListener('click', () => { settings.mode = b.dataset.mode; settings.tap = settings.mode === 'gentle'; syncSettings(); save(); });
-  for (const k of ['sound','tap','vibration','reduced']) $(k + '-setting').addEventListener('change', e => { settings[k] = e.target.checked; syncSettings(); save(); if(k==='sound'||k==='reduced')savePreferences(); });
+  for (const k of ['sound','vibration','reduced']) $(k + '-setting').addEventListener('change', e => { settings[k] = e.target.checked; syncSettings(); save(); if(k==='sound'||k==='reduced')savePreferences(); });
   $('settings-open').addEventListener('click', () => { syncSettings(); $('settings').showModal(); });
   for (const id of ['settings-close','settings-done']) $(id).addEventListener('click', () => $('settings').close());
   for (const id of ['collection-menu','collection-reward']) $(id).addEventListener('click', collection);

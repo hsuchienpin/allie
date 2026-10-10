@@ -1,0 +1,15 @@
+/* The controls live outside the game, including its menus and modal dialogs. */
+html.allie-host{--allie-bar-height:calc(60px + env(safe-area-inset-top));height:100%;overflow:hidden;background:#f3eeea}
+.allie-host body:not(.allie-screen-host){visibility:hidden}
+.allie-host body.allie-screen-host{position:fixed;inset:0;margin:0;width:100%;height:100dvh;min-height:0;display:block;overflow:hidden;padding:0;color:#58465c;background:#f3eeea;font-family:'Trebuchet MS','Segoe UI','Microsoft JhengHei',sans-serif}
+.allie-screenbar{position:fixed;inset:0 0 auto;height:var(--allie-bar-height);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(6px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));background:#fffcf7;border-bottom:1px solid #e8dce1;z-index:10}
+.allie-screenbar button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:46px;min-width:76px;padding:8px 13px;border:1px solid #dbc9dc;border-radius:14px;font-size:13px;font-weight:700;line-height:1.2;color:#78577e;background:#f3e7ef;cursor:pointer;box-shadow:none}
+.allie-screenbar button>span:first-child{font-size:22px}.allie-screenbar button:focus-visible{outline:3px solid #87659b;outline-offset:2px}.allie-screen-name{font-size:14px;font-weight:700;text-align:center}
+#allie-game{position:fixed;top:var(--allie-bar-height);left:0;display:block;width:100%;height:calc(100dvh - var(--allie-bar-height));min-height:0;border:0;background:#f3eeea}
+.allie-screen-notice{position:fixed;top:62px;left:12px;right:12px;z-index:20;margin:0 auto;max-width:650px;padding:12px 16px;border:1px solid #ead5b4;border-radius:14px;background:#fff1d9;color:#8c6941;font-size:13px;line-height:1.7;box-shadow:0 5px 20px #58465c22}
+.allie-screen-notice[hidden]{display:none}
+/* Remove duplicate controls inside the game; the outer toolbar is always visible. */
+.allie-framed body a.game-home,.allie-framed body a[href="../"],.allie-framed body #home-fullscreen,.allie-framed body #fullscreen{display:none!important}
+.allie-framed .allie-nav{min-height:58px;padding-top:8px;padding-bottom:8px}.allie-framed .header{height:62px}.allie-framed .workspace{height:calc(100dvh - 106px)}
+@media(max-width:600px){.allie-screen-name{display:none}.allie-screenbar{gap:8px}.allie-screenbar button{font-size:12px;padding:8px 11px}.allie-framed .hud{gap:10px}.allie-framed #play .hud:has(#frame-label){display:flex;flex-wrap:wrap;min-height:66px}.allie-framed #play .hud #roll-label{font-size:11px}.allie-framed #play .hud .hud-actions{margin-left:auto}}
+@media(max-height:360px) and (min-width:650px){.allie-framed #play .hud{min-height:48px;padding:2px 4px}.allie-framed #play .field{min-height:105px}.allie-framed #play #play-hint,.allie-framed #play .score-note{display:none}.allie-framed .workspace{min-height:210px;height:calc(100dvh - 75px)}}

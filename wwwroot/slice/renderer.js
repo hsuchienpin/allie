@@ -6,24 +6,14 @@
     for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, radius = i % 2 ? r * .48 : r; ctx.lineTo(Math.cos(a) * radius, Math.sin(a) * radius); }
     ctx.closePath(); ctx.fillStyle = color; ctx.fill(); ctx.restore();
   }
-  function tile(image, col, row, cols, rows, size = 256) {
-    const c = document.createElement('canvas'); c.width = c.height = size;
-    c.getContext('2d').drawImage(image, col * image.width / cols + 2, row * image.height / rows + 2, image.width / cols - 4, image.height / rows - 4, 0, 0, size, size);
-    return c;
+  async function prepare(){
+    const mapping={watermelon:'gummy-berry',apple:'gummy-orange',banana:'gummy-grape',grapes:'cotton-unicorn',cottonFlower:'cotton-flower',giftPink:'cake-unicorn',giftMint:'cake-penguin',giftPurple:'cake-heart',meteor:'pop-rainbow',ufo:'pop-berry',alien:'softserve',balloon:'balloon-unicorn',chest:'gift'},sprites={};
+    await Promise.all(Object.entries(mapping).map(async([id,name])=>{sprites[id]=await Allie.art(name);}));return {sprites};
   }
-  function prepare(atlas, stickers) {
-    const mapping={watermelon:12,apple:13,banana:14,grapes:7,giftPink:9,giftMint:10,giftPurple:11,bear:8,meteor:16,ufo:17,alien:15,robot:8,balloon:20,chest:21,car:18,gem:8};
-    const sprites={},halves={};
-    IDS.forEach(id=>{const i=mapping[id];const whole=tile(atlas,i%6,Math.floor(i/6),6,4);sprites[id]=whole;
-      halves[id]=[-1,1].map(side=>{const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');ctx.beginPath();ctx.rect(side<0?0:128,0,128,256);ctx.clip();ctx.drawImage(whole,0,0);return c;});
-    });
-    return {sprites,halves,stickers:Array.from({length:12},(_,i)=>tile(stickers,i%4,Math.floor(i/4),4,3,320))};
-  }
-  function sprite(ctx, assets, id, x, y, size, angle = 0, alpha = 1, side = 0) {
-    if (id === 'star') { star(ctx, x, y, size * .35, '#ffe485', angle); return; }
-    const image = side && assets.halves[id] ? assets.halves[id][side < 0 ? 0 : 1] : assets.sprites[id];
-    if (!image) return;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.globalAlpha = alpha; ctx.drawImage(image, -size / 2, -size / 2, size, size); ctx.restore();
+  function sprite(ctx,assets,id,x,y,size,angle=0,alpha=1,side=0,cutAngle=0,squash=0){
+    const im=assets.sprites[id];if(!im)return;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.globalAlpha=alpha;ctx.scale(1+squash,1-squash);
+    if(side){ctx.rotate(cutAngle);ctx.beginPath();ctx.rect(-size,side<0?-size:0,size*2,size);ctx.clip();ctx.rotate(-cutAngle);}
+    ctx.drawImage(im,-size/2,-size/2,size,size);ctx.restore();
   }
   class Renderer {
     constructor(canvas, assets, forest) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.assets = assets; this.forest = forest; this.trails = []; this.w = 960; this.h = 600; }
@@ -34,24 +24,20 @@
     trail(a, b, time) { if (this.trails.length >= 180) this.trails.shift(); this.trails.push({ a, b, time }); }
     clearTrails() { this.trails.length = 0; }
     draw(game, now) {
-      const ctx = this.ctx, w = this.w, h = this.h, space = game.theme === 'space';
-      const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, space ? '#c8eafa' : game.theme === 'toys' ? '#f8d6e3' : '#abe2f5'); bg.addColorStop(1, space ? '#f3e5f7' : '#fff7dc'); ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-      if (space) {
-        for (let i = 0; i < 36; i++) star(ctx, (i * 137.5 + 40) % w, (i * 79.3 + 21) % h, i % 4 === 0 ? 7 : 3, '#fff3bc');
-        ctx.globalAlpha = .18; ctx.fillStyle = '#d7b0ff'; ctx.beginPath(); ctx.ellipse(w * .85, h * .17, 65, 28, -.3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-      } else {
-        ctx.globalAlpha = .82; if (this.forest) { const strip = Math.min(h * .25, 150); ctx.drawImage(this.forest, 0, this.forest.height * .5, this.forest.width, this.forest.height * .5, 0, h - strip, w, strip); } ctx.globalAlpha = 1;
-        ctx.fillStyle = '#ffffffa0'; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse((i * .29 + .06) * w, (i % 2 ? .22 : .08) * h, 65, 22, 0, 0, Math.PI * 2); ctx.fill(); }
-      }
+      const ctx = this.ctx, w = this.w, h = this.h;
+      const bg=ctx.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#fff7eb');bg.addColorStop(1,'#f7ece6');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+      // Quiet sweet-shop canopy and countertop keep the moving treats readable.
+      const stripe=70;for(let x=-stripe;x<w;x+=stripe){ctx.fillStyle=Math.round(x/stripe)%2?'#eddbe18c':'#f6eadf';ctx.beginPath();ctx.roundRect(x,-15,stripe+1,45,[0,0,18,18]);ctx.fill();}
+      ctx.fillStyle='#e2c6ab';ctx.fillRect(0,h-20,w,20);ctx.fillStyle='#f0dbc4';ctx.fillRect(0,h-24,w,7);
       for (const o of game.objects) {
         sprite(ctx, this.assets, o.type, o.x, o.y, o.r * 2.35);
         if (o.type === 'balloon') {
           const n = game.spec.balloonHits, gap = Math.min(29, o.r * .28), start = o.x - (n - 1) * gap / 2;
           for (let i = 0; i < n; i++) { star(ctx, start + i * gap, o.y + o.r * .53, gap * .42, i < o.hits ? '#ffde4b' : '#ffffffaa'); }
-          ctx.save(); ctx.font = 'bold 19px "Microsoft JhengHei",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = space ? '#c8eafa' : '#fff8ec'; ctx.strokeText('再滑幾下！', o.x, Math.min(h - 25, o.y + o.r * 1.22)); ctx.fillStyle = space ? '#fff1b0' : '#855339'; ctx.fillText('再滑幾下！', o.x, Math.min(h - 25, o.y + o.r * 1.22)); ctx.restore();
+          ctx.save(); ctx.font = 'bold 19px "Microsoft JhengHei",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = '#fff8ec'; ctx.strokeText('Swipe!' , o.x, Math.min(h - 25, o.y + o.r * 1.22)); ctx.fillStyle = '#855339'; ctx.fillText('Swipe!' , o.x, Math.min(h - 25, o.y + o.r * 1.22)); ctx.restore();
         }
       }
-      for (const p of game.pieces) sprite(ctx, this.assets, p.type, p.x, p.y, p.r * 2.35, p.angle, Math.min(1, p.life * 2), p.side);
+      for (const p of game.pieces) sprite(ctx, this.assets, p.type, p.x, p.y, p.r * 2.35, p.angle, Math.min(1, p.life * 2), p.side, p.cutAngle, p.material==='gummy'&&!game.reduced?Math.sin((p.maxLife-p.life)*18)*.07:0);
       for (const p of game.surprises) sprite(ctx, this.assets, p.type, p.x, p.y, p.r * 2.4, p.angle, Math.min(1, p.life));
       for (const p of game.particles) {
         ctx.save(); ctx.globalAlpha = Math.min(1, p.life / p.maxLife * 2); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
@@ -70,11 +56,10 @@
       }
       if (game.state === 'chest' || game.state === 'reveal') { ctx.fillStyle = '#25324a80'; ctx.fillRect(0, 0, w, h); }
     }
-    theme(canvas, theme) {
-      const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const sets = { fruit: ['watermelon','apple','banana'], toys: ['giftPink','giftMint','giftPurple'], space: ['ufo','meteor','alien'] };
-      const [a, b, c] = sets[theme]; sprite(ctx, this.assets, a, 132, 111, 180, -.08); sprite(ctx, this.assets, b, 227, 145, 121, .08); sprite(ctx, this.assets, c, 49, 174, 85, -.12);
-      star(ctx, 45, 44, 12, '#ffe171'); star(ctx, 254, 50, 9, '#fff6c3');
+    menu(canvas) {
+      const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+      const items=['grapes','giftPink','alien','watermelon','giftMint','meteor','apple','giftPurple','ufo','banana','cottonFlower'];
+      for(const [i,type] of items.entries()){const top=i<6,col=top?i:i-6; sprite(ctx,this.assets,type,top?70+col*132:136+col*132,top?110:255,top?150:130,(i%2?1:-1)*.07);}
     }
     reward(canvas, sticker, now, reduced) {
       const ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height; ctx.clearRect(0, 0, w, h);
@@ -84,7 +69,7 @@
       else {
         ctx.save(); ctx.translate(w / 2, h * .66); ctx.rotate(-.10); ctx.fillStyle = '#fbd579'; ctx.strokeStyle = '#b97937'; ctx.lineWidth = 5; ctx.beginPath(); ctx.roundRect(-102, -37, 204, 70, 12); ctx.fill(); ctx.stroke(); ctx.restore();
         sprite(ctx, this.assets, 'chest', w / 2, h * .78, w * .66);
-        ctx.drawImage(this.assets.stickers[sticker], w * .20, h * .02 + bounce, w * .6, w * .6);
+
       }
       for (let i = 0; i < 7; i++) star(ctx, (i * 63 + 20) % w, (i * 49 + 21) % h, 5 + i % 3 * 2, '#fff0a4', reduced ? 0 : now * .3);
     }

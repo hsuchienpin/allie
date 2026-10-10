@@ -1,5 +1,6 @@
 (function() {
   'use strict';
+  if (window.AllieScreen?.isHost) return;
   const base=new URL('../',document.currentScript.src), C=AllieCore;
   // Retain the original storage namespace when the published project path is renamed.
   const storagePath=base.pathname==='/allie/'?'/allies-playground/':base.pathname;
@@ -37,7 +38,8 @@
   }
   let ready=initialize(); ready.catch(()=>{});
   const getState=async()=>{await ready;return transaction(false,(_,state)=>state);};
-  const session=game=>game+':'+crypto.randomUUID();
+  function uuid(){if(crypto.randomUUID)return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));b[6]=b[6]&15|64;b[8]=b[8]&63|128;const h=[...b].map(v=>v.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);}
+  const session=game=>game+':'+uuid();
   async function reward(taskId,game) {
     await ready;
     const candidate=C.ids[Math.floor(Math.random()*C.ids.length)];
@@ -62,6 +64,7 @@
     const item=C.catalog.find(i=>i.id===type);if(!item)return Promise.reject(Error('Unknown sticker'));
     const promise=(async()=>{
       const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');
+      if(item.image){const image=await loadImage(item.image);ctx.drawImage(image,0,0,256,256);return canvas;}
       if(item.atlas==='symbol'){ctx.font='150px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(item.symbol,128,128);return canvas;}
       const path=item.atlas==='new'?'assets/allie/stickers.webp':'slice/assets/stickers.png';
       let atlas=cached.get('atlas:'+path);if(!atlas){atlas=loadImage(path);cached.set('atlas:'+path,atlas);}const image=await atlas;
@@ -77,20 +80,22 @@
     const name=document.createElement('strong');name.textContent=item.name;
     const help=document.createElement('p');help.textContent='獲得一張貼紙，已放進共用背包。帶到畫室，每張只能貼一次。';
     const actions=document.createElement('div');actions.className='allie-links';
-    for(const [label,path] of [['Draw','studio/'],['My Stickers','stickers/']]){const link=document.createElement('a');link.textContent=label;link.href=url(path);link.className='allie-button';actions.append(link);}
+    for(const [label,path] of [['Use','studio/?sticker='+encodeURIComponent(result.type)],['My Stickers','stickers/']]){const link=document.createElement('a');link.textContent=label;link.href=url(path);link.className='allie-button';actions.append(link);}
     container.append(title,image,name,help,actions);
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches){const state=await getState();if(!state.preferences.reduced){const gift=document.createElement('div');gift.className='allie-gift-open';gift.setAttribute('aria-hidden','true');const art=document.createElement('img');art.src=url('assets/allie/v2/gift.webp');gift.append(art);container.append(gift);setTimeout(()=>gift.remove(),1200);}}
+
   }
   function rewardBox(parent) {let el=parent.querySelector('.allie-reward');if(!el){el=document.createElement('section');el.className='allie-reward';el.setAttribute('aria-live','polite');parent.append(el);}return el;}
   async function award(parent,taskId,game) {const el=rewardBox(parent);el.textContent='正在保存貼紙…';try{await rewardView(el,await reward(taskId,game));}catch(error){el.replaceChildren();const p=document.createElement('p');p.textContent='貼紙未能保存：'+error.message;const retry=document.createElement('button');retry.textContent='Try again';retry.onclick=()=>award(parent,taskId,game);el.append(p,retry);}}
   function header() {
-    if(document.body.dataset.allie==='home')return;
+    if(['home','rhythm'].includes(document.body.dataset.allie))return;
     const nav=document.createElement('nav');nav.className='allie-nav';nav.setAttribute('aria-label','Allie’s Playground');
     const brand=document.createElement('a');brand.href=url('');brand.textContent="Allie's Playground";
-    const link=document.createElement('a');link.href=url('stickers/');link.textContent='My Stickers';
+    const link=document.createElement('a');link.href=url('stickers/');link.textContent='Stickers';const count=document.createElement('span');count.className='allie-bag-count';link.append(count);const update=async()=>{try{const state=await getState();count.textContent=Object.values(C.counts(state)).reduce((a,b)=>a+b,0);}catch(_){count.textContent='';}};window.addEventListener('allie-change',update);update();
     nav.append(brand,link);document.body.prepend(nav);
     const note=document.createElement('p');note.className='allie-storage';note.hidden=true;note.textContent='這台裝置無法保存貼紙與草稿。遊戲仍可玩；請下載作品，暫時無法使用獎勵貼紙。';document.body.append(note);
     window.addEventListener('allie-storage-error',()=>note.hidden=false);if(unavailable)note.hidden=false;
   }
-  window.Allie={base,url,ready,getState,session,reward,getDraft,saveDraft,lastDraft,preferences,bindPreferences,sticker,stickerImage,rewardView,award,counts:C.counts,catalog:C.catalog};
+  window.Allie={base,url,ready,getState,session,reward,getDraft,saveDraft,lastDraft,preferences,bindPreferences,sticker,stickerImage,rewardView,award,loadImage,art:name=>loadImage('assets/allie/v2/'+name+'.webp'),counts:C.counts,catalog:C.catalog,inventory:C.inventory};
   document.addEventListener('DOMContentLoaded',header);
 })();

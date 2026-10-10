@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><script src="../shared/screen.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#27895b">
@@ -11,27 +11,27 @@
   <script defer src="../runner/core.js"></script>
   <script defer src="../runner/renderer.js"></script>
   <script defer src="../runner/app.js"></script>
-</head>
+<link rel="stylesheet" href="../shared/screen.css"></head>
 <body>
   <main>
     <section id="selection" class="selection screen" aria-labelledby="game-title">
       <header class="selection-header"><a href="../" class="back-link">‹ Home</a><button id="sound-menu" class="quiet" aria-pressed="true">Sound: On</button></header>
       <div class="title-block"><span class="eyebrow">小小冒險，大大勇氣</span><h1 id="game-title">Go!</h1><p>選好夥伴，準備出發</p></div>
       <div id="vehicles" class="vehicles" role="group" aria-label="選擇角色"></div>
-      <div class="journey"><span>♥ 3 顆生命</span><span>✦ 四大路線</span></div>
+      <div class="journey"><span>♥ ♥ ♥</span><span>4 Places</span></div>
       <p id="vehicle-detail" class="vehicle-detail" aria-live="polite"></p>
       <button id="start" class="primary large">Play <span aria-hidden="true">▶</span></button>
-      <p class="help">按住方向移動。用另一隻手按加速或減速，<br>探索花園、戶外遊樂場、室內遊樂場與甜點街。</p>
+      <p class="help">按住 ← → 左右閃避球球、收集星星。玩滿 30 秒，按 Done 領取一張貼紙。<br>途中會經過花園、遊樂場、室內遊樂場與甜點街。</p>
       <div class="menu-bottom"><button id="open-history" class="quiet">My Best</button><span id="menu-best">最佳 0 分</span></div>
       <p id="storage-notice" class="notice" hidden role="status"></p>
     </section>
 
     <section id="play" class="play screen" hidden aria-label="避障遊戲">
       <div class="play-shell">
-        <header class="hud">
+        <header class="hud"><a href="../" class="game-home" aria-label="Home"><span aria-hidden="true">⌂</span> Home</a>
           <div class="hud-stat"><small>Score</small><strong id="score">0</strong></div>
-          <div class="hud-stat"><small>Distance</small><strong><span id="distance">0</span><small> m</small></strong></div>
-          <span id="lives" class="lives" aria-label="3 顆生命">♥♥♥</span>
+          <div class="hud-stat"><small>Trip</small><strong><span id="distance">0</span><small> m</small></strong></div>
+          <div class="goal-wrap"><span>1 Sticker <small id="goal-time">0 / 30</small></span><div id="goal" role="progressbar" aria-label="Sticker goal" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0"><i id="goal-fill"></i></div></div><button id="finish-run" hidden class="primary">Done ✓</button><span id="lives" class="lives" aria-label="3 顆生命">♥♥♥</span>
           <button id="pause" class="pause-button" aria-label="暫停遊戲">Ⅱ</button>
         </header>
         <div class="field">
@@ -40,11 +40,7 @@
           <div id="announcement" class="announcement" hidden></div>
           <div id="countdown" class="countdown" hidden aria-live="polite"></div>
         </div>
-        <div class="controls" role="group" aria-label="六鍵操作區">
-          <div class="hand left-hand"><button data-action="boost" aria-label="左側加速，按住生效"><span aria-hidden="true">↑</span> Fast</button><button data-action="brake" aria-label="左側減速，按住生效"><span aria-hidden="true">↓</span> Slow</button><button data-action="left" aria-label="向左，按住移動"><span aria-hidden="true">←</span><small>Left</small></button></div>
-          <div class="control-middle"><span id="speed-label">Go!</span><small>左右閃避<br>Go!</small></div>
-          <div class="hand right-hand"><button data-action="boost" aria-label="右側加速，按住生效"><span aria-hidden="true">↑</span> Fast</button><button data-action="brake" aria-label="右側減速，按住生效"><span aria-hidden="true">↓</span> Slow</button><button data-action="right" aria-label="向右，按住移動"><span aria-hidden="true">→</span><small>Right</small></button></div>
-        </div>
+        <div class="controls" role="group" aria-label="Move"><button data-action="left" aria-label="Move left">← <small>Left</small></button><div class="control-middle"><span id="speed-label">Go!</span><small lang="zh-Hant">按住方向，閃開球球</small></div><button data-action="right" aria-label="Move right">→ <small>Right</small></button></div>
       </div>
     </section>
 

@@ -2,7 +2,13 @@
 
 Allie 版採原創獨角獸公主風格，奶油白、粉紅、淡紫、薄荷綠。角色、服裝與圖案不以大耳狗、美樂蒂或特定動畫公主作參考。
 
-## 本次新增
+## 2026-10-10 圖畫書素材
+
+`wwwroot/assets/allie/v2/` 共 33 張 WebP：24 張獨立回憶貼紙、4 張走路姿勢、花園與保齡球房間、獨角獸與公主線稿，以及禮物盒。全部使用內建 image_gen 製作，角色沿用核准預覽的原創設計；透明素材保留 alpha，Sharp 僅用於網頁尺寸與 WebP 編碼。一般素材為 512 像素，場景長邊 1536，線稿長邊 1024。
+
+完整提示詞記錄見同目錄 `prompts.json`。新遊戲素材各自載入，停止從 6 × 4 圖集裁切；舊圖集與 SVG 保留供歷史資料和其餘既有圖卡相容。Bowl 的球瓶、球、透視球道與粒子由 Canvas 繪製，並以生成房間作背景。
+
+## 第一版素材
 
 | 檔案 | 製作方式 | 用途 |
 |---|---|---|
@@ -21,3 +27,11 @@ AI 圖稿未作為特定第三方角色的授權素材使用；本檔記錄生�
 原有 30 張圖卡與 10 枚印章由 `scripts/card_designs.py`、`scripts/generate_assets.py` 自行製作。原有 Slice／Bowl PNG、森林封面與角色圖曾由 image_gen 生成；其中部分已改為 Allie 素材，保留舊貼紙圖集供既有收藏遷移。Slice 六段 WAV 為 `scripts/generate_slice_audio.py` 本機合成；其他音效由 Web Audio 合成。
 
 jQuery 3.7.1 隨專案附帶，其 MIT 授權文字保留在 `wwwroot/vendor/LICENSE.jquery.txt`。網站不引用外部圖片、字型或 CDN。
+
+## 十張著色紙
+
+既有 `v2/unicorn-line.webp` 原檔保留。九張新增線稿位於 `wwwroot/assets/allie/papers/`，由內建 image_gen 以獨角獸線稿作畫風與複雜度參考獨立繪製，PNG 等比例縮放為 1024 像素、品質 92 的 WebP，合計 522,896 bytes。壓縮後已再次驗證填色邊界。完整提示詞見同目錄 `prompts.json`。新圖使用獨立 ID；舊圖檔保留供相容用途，不再列於選單。
+
+## 音樂遊戲
+
+Piano／Drums 延用原創花園、獨角獸、公主、企鵝透明圖；琴鍵、鼓面、音符與首頁樂器圖案由 HTML／CSS 繪製。預覽整張 UI 圖沒有作為遊戲背景。音色為自製 Web Audio 合成，沒有新增錄音、下載 MIDI、第三方音庫或授權角色；20 首歷史旋律的原作查核與自製編曲範圍見 [MUSIC.md](MUSIC.md)。

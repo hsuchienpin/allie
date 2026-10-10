@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  if (window.AllieScreen?.isHost) return;
   const C = RunnerCore, A = RunnerArt, $ = id => document.getElementById(id);
   let storage;
   try { storage = window.localStorage; } catch (_) { storage = { getItem() { throw Error('Storage unavailable'); }, setItem() { throw Error('Storage unavailable'); } }; }
@@ -8,17 +9,9 @@
   let selected = records.data.vehicle, game = null, mode = 'menu', last = 0, accumulator = 0, countdown = 3, hudAge = 0;
   let announcementTime = 0, toastTimer = 0, audio = null, lastSound = 0, saved = false;
   const renderer = new A.Renderer($('game')), reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const portraits = new Image(), portraitCanvases = new Map();
-  $('start').disabled = true;
-  function portrait(ctx, id, x, y, height) {
-    if (!portraits.complete || !portraits.naturalWidth) { A.vehicle(ctx, id, x, y, height / 100); return; }
-    const index={runner:3,bicycle:0,motorcycle:2,car:6}[id],sw=portraits.width/6,sh=portraits.height/4; ctx.drawImage(portraits,(index%6)*sw,Math.floor(index/6)*sh,sw,sh,x-height/2,y-height/2,height,height);
-  }
-  portraits.onload = () => {
-    for (const [id, canvas] of portraitCanvases) { const ctx = canvas.getContext('2d'); ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.clearRect(0, 0, 170, 100); portrait(ctx, id, 85, 50, 100); }
-    $('start').disabled = false;
-  };
-  portraits.onerror = () => { $('start').disabled = false; };
+  const portraitCanvases=new Map(); $('start').disabled=true;
+  function portrait(ctx,id,x,y,height){A.vehicle(ctx,id,x,y,height/100);}
+  A.ready.then(()=>{for(const [id,canvas]of portraitCanvases){const ctx=canvas.getContext('2d');ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,170,100);portrait(ctx,id,85,50,100);}$('start').disabled=false;}).catch(()=>{toast('部分圖片未能載入，請重新整理再試一次。');});
   function toast(text) { clearTimeout(toastTimer); $('toast').textContent = text; $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3500); }
   function show(id) { for (const screen of ['selection', 'play', 'result']) $(screen).hidden = screen !== id; document.body.classList.toggle('playing', id === 'play'); }
   function clearControls() { controls.clear(); syncButtons(); }
@@ -55,6 +48,7 @@
   }
   function updateHUD() {
     if (!game) return;
+    $('goal-fill').style.width=Math.min(100,game.elapsed/30*100)+'%';$('goal-time').textContent=Math.min(30,Math.floor(game.elapsed))+' / 30';$('goal').setAttribute('aria-valuenow',String(Math.min(30,Math.floor(game.elapsed))));$('finish-run').hidden=game.elapsed<30;
     $('score').textContent = game.score.toLocaleString(); $('distance').textContent = Math.floor(game.distance).toLocaleString();
     $('lives').textContent = '♥'.repeat(game.lives) + '♡'.repeat(3 - game.lives); $('lives').setAttribute('aria-label', `${game.lives} 顆生命`); $('scene').textContent = C.SCENES[game.sceneIndex].name;
     const effect = game.invincible > 0 ? `Shield ${Math.ceil(game.invincible)}s` : game.armor > 0 ? 'Shield' : game.hurt > 0 ? 'Safe' : '';
@@ -81,6 +75,7 @@
     const canvas = $('result-art'), ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); A.star(ctx, 35, 35, 16); A.star(ctx, 168, 54, 20); portrait(ctx, game.vehicleId, 100, 78, 150);
     show('result'); if(game.elapsed>=30) Allie.award($('result'),taskId,'runner'); else {const note=document.createElement('p');note.className='allie-reward';note.textContent='再玩久一點吧！累積 30 秒有效遊玩，結算就能得到一張貼紙。';$('result').append(note);} $('result-title').setAttribute('tabindex', '-1'); $('result-title').focus({ preventScroll: true });
   }
+  $('finish-run').addEventListener('click',()=>{if(game?.elapsed>=30)finish();});
   $('start').addEventListener('click', begin); $('restart').addEventListener('click', begin); $('pause').addEventListener('click', () => pause()); $('resume').addEventListener('click', resume); $('quit').addEventListener('click', finish);
   $('pause-dialog').addEventListener('cancel', e => { e.preventDefault(); resume(); }); $('change-vehicle').addEventListener('click', () => { mode = 'menu'; show('selection'); choose(selected); $('start').focus({ preventScroll: true }); });
   document.querySelectorAll('[data-action]').forEach(button => {
@@ -113,11 +108,11 @@
     const dt = last ? Math.min(.1, Math.max(0, (timestamp - last) / 1000)) : 0; last = timestamp;
     if (mode === 'countdown') { countdown -= dt; $('countdown').textContent = String(Math.max(1, Math.ceil(countdown))); if (countdown <= 0) { mode = 'running'; $('countdown').hidden = true; accumulator = 0; clearControls(); } }
     else if (mode === 'running') {
-      accumulator += dt; while (accumulator >= 1 / 60 && mode === 'running') { game.step(1 / 60, controls.read()); accumulator -= 1 / 60; for (const event of game.events) { tone(event); if (event === 'scene') announce(`${C.SCENES[game.sceneIndex].name}，出發！`); else if (event === 'armor') announce('裝甲保護了你！', 1.2); else if (event === 'star') announce('無敵星星！', 1.2); else if (event === 'end') { finish(); break; } } }
+      accumulator += dt; while (accumulator >= 1 / 60 && mode === 'running') { game.step(1 / 60, controls.read()); accumulator -= 1 / 60; for (const event of game.events) { tone(event); if (event === 'scene') announce(C.SCENES[game.sceneIndex].name); else if (event === 'armor') announce('Safe!', 1.2); else if (event === 'star') announce('Star!', 1.2); else if (event === 'end') { finish(); break; } } }
       announcementTime -= dt; if (announcementTime <= 0) $('announcement').hidden = true;
     }
     if (['running', 'countdown'].includes(mode)) { renderer.draw(game, (reduced.matches||records.data.reduced)); hudAge += dt; if (hudAge >= .1 || mode === 'countdown') { updateHUD(); hudAge = 0; } } requestAnimationFrame(frame);
   }
-  portraits.src = Allie.url('assets/allie/stickers.webp');
+
   Allie.bindPreferences(records.data,soundUI); choose(selected); soundUI(); storageNotice(); requestAnimationFrame(frame);
 })();

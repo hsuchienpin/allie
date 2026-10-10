@@ -8,7 +8,8 @@ function object(game, type = 'apple', x = 350, y = 250) { const o = game.spawn(t
 
 test('segment hit testing catches fast passes, accepts expanded edge, rejects distant paths', () => {
   const g = new C.Game(), o = object(g);
-  assert.equal(g.swipe({x:0,y:o.y + o.r * 1.2},{x:800,y:o.y + o.r * 1.2}), 1);
+  assert.equal(g.swipe({x:0,y:o.y + o.r * 1.21},{x:800,y:o.y + o.r * 1.21}), 0);
+  assert.equal(g.swipe({x:0,y:o.y + o.r * 1.19},{x:800,y:o.y + o.r * 1.19}), 1);
   assert.equal(g.energy, 1); assert.equal(g.objects.length, 0);
   assert.equal(g.swipe({x:0,y:o.y},{x:800,y:o.y}), 0); assert.equal(g.energy, 1);
   object(g); assert.equal(g.swipe({x:0,y:500},{x:800,y:500}), 0);
@@ -19,13 +20,16 @@ test('one swipe cuts multiple objects; threshold freezes additional hits and emi
   const y = g.objects[0].y; advance(g, 3); assert.equal(g.objects[0].y, y);
   assert.equal(g.takeEvents().filter(e => e.kind === 'chest').length, 1); assert.equal(g.tap(600,250), false);
 });
-test('fruit juice matches its fruit; gifts reveal a toy and space items reveal gems or stars', () => {
-  const fruit = new C.Game(); fruit.cut(object(fruit, 'grapes')); assert.equal(fruit.pieces.length, 2);
-  assert.ok(fruit.particles.every(p => ['#b782e8','#e7b4f7','#8f6cce'].includes(p.color)));
-  const toys = new C.Game({theme:'toys',rng:()=>0}); toys.cut(object(toys,'giftMint'));
-  assert.equal(toys.surprises.length,1); assert.ok(['bear','car','robot'].includes(toys.surprises[0].type));
-  const space = new C.Game({theme:'space'}); space.cut(object(space,'meteor'));space.cut(object(space,'ufo'));space.cut(object(space,'alien'));
-  assert.deepEqual(space.surprises.map(p=>p.type),['gem','star','star']);
+test('sweets produce material-matched crumbs, not unrelated toys or gems',()=>{
+  for(const [type,material]of [['apple','gummy'],['grapes','cotton'],['cottonFlower','cotton'],['giftMint','cake'],['meteor','ice']]){
+    const g=new C.Game();g.cut(object(g,type));assert.equal(g.pieces.length,2);assert.ok(g.particles.every(p=>p.material===material));assert.equal(g.surprises.length,0);
+    if(material==='cake')assert.ok(g.particles.every(p=>p.r<5&&p.gravity>200));
+  }
+});
+test('swipes split sweets along the gesture, with pieces moving apart across the cut',()=>{
+  for(const [a,b,expected]of [[{x:0,y:250},{x:800,y:250},0],[{x:350,y:0},{x:350,y:550},Math.PI/2],[{x:0,y:-100},{x:700,y:600},Math.PI/4]]){
+    const g=new C.Game({rng:()=>.5});object(g);assert.equal(g.swipe(a,b),1);const [p,q]=g.pieces;assert.ok(Math.abs(p.cutAngle-expected)<1e-8);const dx=b.x-a.x,dy=b.y-a.y;assert.ok((q.vx-p.vx)*(-dy)+(q.vy-p.vy)*dx>0);assert.equal(g.energy,1);
+  }
 });
 test('balloon requires separate traversals or real reversals; stationary and small jitter cannot fill it', () => {
   const g = new C.Game(), b = object(g,'balloon',480,250);
@@ -36,11 +40,11 @@ test('balloon requires separate traversals or real reversals; stationary and sma
   for(let i=0;i<100;i++){ advance(g,.02); g.swipe({x:480 + (i%2)*3,y:b.y},{x:483 - (i%2)*3,y:b.y},1); }
   assert.equal(b.hits,1);
   g.swipe({x:480,y:b.y},{x:620,y:b.y},1); advance(g,.2); g.swipe({x:620,y:b.y},{x:350,y:b.y},1); assert.equal(b.hits,3);
-  for(let i=0;i<2;i++){ advance(g,.2); g.release(1); g.swipe({x:0,y:b.y},{x:950,y:b.y},1); }
+  for(let i=0;i<5;i++){ advance(g,.2); g.release(1); g.swipe({x:0,y:b.y},{x:950,y:b.y},1); }
   assert.equal(g.objects.length,0); assert.equal(g.energy,3); assert.equal(g.cuts,1);
 });
-test('happy balloon takes eight hits; tap debounce prevents several fingers counting together', () => {
-  const g = new C.Game({mode:'happy'}), b = object(g,'balloon',480,250);
+test('balloon takes eight hits; keyboard activation debounce prevents repeated hits', () => {
+  const g = new C.Game(), b = object(g,'balloon',480,250);
   for(let i=0;i<7;i++){ advance(g,.2); assert.equal(g.tap(b.x,b.y),true); assert.equal(g.tap(b.x,b.y),false); }
   assert.equal(b.hits,7); assert.equal(g.objects.length,1); advance(g,.2); g.tap(b.x,b.y); assert.equal(g.objects.length,0);
 });
@@ -73,13 +77,13 @@ test('pending rewards survive reload, prefer uncollected stickers, and cannot be
 });
 test('records reject corrupt values and fall back to memory when storage is blocked', () => {
   const s=storage();s.setItem(C.KEY,JSON.stringify({sessions:-4,slices:'NaN',energy:900,stickers:[0,0,-1,12,'1'],settings:{theme:'unknown',mode:'bad',sound:'yes'},pending:{id:1,sticker:999}}));
-  const r=new C.Records(s);assert.equal(r.data.sessions,0);assert.equal(r.data.energy,19);assert.deepEqual(r.data.stickers,[0]);assert.equal(r.data.pending,null);assert.equal(r.data.settings.theme,'fruit');
+  const r=new C.Records(s);assert.equal(r.data.sessions,0);assert.equal(r.data.energy,19);assert.deepEqual(r.data.stickers,[0]);assert.equal(r.data.pending,null);assert.equal(r.data.settings.theme,undefined);
   const bad=new C.Records({getItem(){throw Error();},setItem(){throw Error();}}); bad.start();bad.slice(3);const p=bad.prepare(()=>0);assert.ok(bad.claim(p.id));assert.equal(bad.available,false);assert.equal(bad.data.stickers.length,1);
 });
-test('15-minute simulations across themes, modes and aspect ratios keep effects bounded', () => {
+test('15-minute mixed-round simulations across aspect ratios keep effects bounded', () => {
   let balloons=0, chests=0;
-  for(const theme of Object.keys(C.THEMES))for(const mode of Object.keys(C.MODES))for(const [width,height] of [[390,680],[1024,680]]){
-    const g=new C.Game({theme,mode,width,height,rng:C.seededRandom(19)});
+  for(const [width,height] of [[390,680],[1024,680]]){
+    const g=new C.Game({width,height,rng:C.seededRandom(19)});
     for(let i=0;i<15*60*60;i++){
       g.step(1/60);
       if(i%15===0)for(const o of [...g.objects])if(o.y>o.r && o.y<g.height-o.r){const was=o.type==='balloon';g.tap(o.x,o.y);if(was&&!g.objects.includes(o))balloons++;}
@@ -87,14 +91,20 @@ test('15-minute simulations across themes, modes and aspect ratios keep effects 
       g.takeEvents();assert.ok(g.objects.length<=g.spec.max);assert.ok(g.particles.length<=360);assert.ok(g.pieces.length<=30);assert.ok(g.surprises.length<=12);assert.ok(g.gestures.size<=2);
     }
   }
-  assert.ok(balloons>50);assert.ok(chests>50);
+  assert.ok(balloons>30);assert.ok(chests>30);
 });
-test('every theme item is reachable, menu entry and all static assets are present', () => {
-  for(const theme of Object.keys(C.THEMES)){
-    const g=new C.Game({theme,rng:C.seededRandom(99)}),seen=new Set();
-    for(let i=0;i<80;i++){seen.add(g.spawn().type);g.objects.length=0;}assert.deepEqual([...seen].sort(),[...C.THEMES[theme].items].sort());
-  }
+test('all eleven treats are reachable in one round, with local assets', () => {
+  const g=new C.Game({rng:C.seededRandom(99)}),seen=new Set();
+  for(let i=0;i<160;i++){seen.add(g.spawn().type);g.objects.length=0;}assert.equal(seen.size,11);assert.deepEqual([...seen].sort(),[...C.ITEMS].sort());
   const root=path.join(__dirname,'..','wwwroot');const catalog=JSON.parse(fs.readFileSync(path.join(root,'portal/games.json')));
   const entry=catalog.find(g=>g.id==='slice');assert.equal(entry.href,'/slice/');assert.ok(fs.existsSync(path.join(root,entry.image)));
   for(const f of ['index.html','core.js','renderer.js','app.js','style.css','assets/sprites.png','assets/stickers.png','assets/slice.wav','assets/pop.wav','assets/progress.wav','assets/burst.wav','assets/chest.wav','assets/cheer.wav'])assert.ok(fs.statSync(path.join(root,'slice',f)).size>0,f);
+});
+
+test('old easy/theme choices cannot change the fixed pace or erase saved progress and pending reward',()=>{
+  const s=storage(),epoch='slice:12345678-1234-1234-1234-123456789abc';
+  s.setItem(C.KEY,JSON.stringify({energy:14,serial:8,rewardEpoch:epoch,settings:{theme:'toys',mode:'gentle',tap:true,sound:false,reduced:true}}));
+  const r=new C.Records(s);assert.equal(r.data.energy,14);assert.equal(r.data.rewardEpoch,epoch);assert.deepEqual(r.data.settings,{sound:false,vibration:false,reduced:true});
+  const g=new C.Game({theme:'toys',mode:'gentle',energy:r.data.energy});assert.equal(g.spec.travel,11);assert.equal(g.spec.interval,1.9);assert.equal(g.spec.max,5);assert.equal(g.spec.hit,1.2);assert.equal(g.spec.balloonHits,8);assert.equal(g.energy,14);
+  const pending=r.prepare(()=>0);assert.deepEqual(new C.Records(s).data.pending,pending);
 });

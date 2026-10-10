@@ -1,0 +1,52 @@
+{
+  "tool": "Built-in image_gen",
+  "date": "2026-10-10",
+  "reference": "/assets/allie/v2/unicorn-line.webp",
+  "papers": [
+    {
+      "id": "penguin",
+      "name": "Penguin",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One adorable baby penguin wearing a simple scarf with two broad stripes, waving one flipper. Large white unfilled head, belly and flippers, two webbed feet, cute glossy eyes. Do not fill the body black. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "jellyfish",
+      "name": "Jellyfish",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One smiling bell-shaped jellyfish, a wide scalloped bell with 3 large patches, four short broad flowing tentacles as closed ribbons, two separate simple bubbles. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "princess",
+      "name": "Princess",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One original friendly little princess, warm curly bob hair simplified into 5 broad locks, tiny crown with 3 broad points, a simple full skirt with 4 broad panels, puff sleeves, large heart on bodice, little shoes, waving. No licensed character. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "balloons",
+      "name": "Balloons",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: Three large balloon shapes grouped as one bouquet: one heart, one star with rounded points, and one simple unicorn head balloon with 3 broad mane locks. Three clean strings meet at one broad bow. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "cotton-candy",
+      "name": "Cotton Candy",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One large cute unicorn-shaped cotton candy on a broad striped paper cone: cloudlike cotton head, two ears, simple horn with 3 sections, two closed eyes, three broad swirls, and a bow around cone. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "cake",
+      "name": "Little Cake",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One large cute bear-shaped egg sponge cake on a small plate, round ears, little smiling face, white unfilled cake body with two broad edge contour sections. Beside it one small heart-shaped egg sponge cake. Few broad areas, no sprinkles. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "ice-cream",
+      "name": "Ice Cream",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One large soft serve ice cream in a cone with four broad soft-serve layers, a heart biscuit on top and a simple cone with only 3 broad diagonal bands; beside it one small rounded fruit ice pop with three broad horizontal sections. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "slide",
+      "name": "Playground",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One friendly playground slide, isolated simple structure: a rounded small tower with simple pointed roof, 3 broad ladder steps, broad curving slide ramp with closed sides. No intricate railings, no scenery. One simple plastic ball with three broad curved panels beside it. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    },
+    {
+      "id": "playhouse",
+      "name": "Play House",
+      "prompt": "Use case: illustration-story. Create one finished children's coloring page for Allie's Playground. Reference image is STYLE AND DIFFICULTY only: match its smooth bold black outlines, cute rounded proportions, meaningful large enclosed coloring regions, and similar moderate complexity suitable for a 6 year old using tap-to-fill. New subject: One cute indoor soft-play ball-pit house: a low round-corner rectangular padded pit containing only five large circular plastic balls, a wide arch with two broad stripes behind it, a little star emblem on arch. Simple front three-quarter view, no mesh, no extra background. Pure white background and interiors, pure black linework, no gray, shading, texture, color, text, border, watermark or small repeated decorations. Strong fully closed boundaries suitable for flood fill. One centered complete subject filling about 80% of a square page with generous margins, roughly 15 to 25 broad colorable regions, no thin tiny spaces. Every non-eye area remains white. Deliver a clean high-quality standalone coloring illustration, not a mockup."
+    }
+  ]
+}

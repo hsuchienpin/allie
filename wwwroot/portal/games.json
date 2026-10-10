@@ -9,8 +9,8 @@
     "art": "studio",
     "theme": "coral",
     "tags": [
-      "42 張圖卡",
-      "3 級難度"
+      "10 張著色卡",
+      "消耗式貼紙"
     ]
   },
   {
@@ -37,7 +37,7 @@
     "image": "/slice/assets/cover.png",
     "theme": "coral",
     "tags": [
-      "3 個甜點主題",
+      "11 種物品混合",
       "24 種共用貼紙",
       "沒有扣分"
     ]
@@ -55,5 +55,27 @@
       "一局 10 格",
       "一指操作"
     ]
+  },
+  {
+    "id": "piano",
+    "title": "Piano",
+    "category": "音樂小畫室",
+    "description": "跟著亮起的琴鍵，一次按一個音。",
+    "href": "/piano/",
+    "action": "Play",
+    "art": "piano",
+    "theme": "lavender",
+    "tags": ["8 個大白鍵", "10 首熟悉旋律"]
+  },
+  {
+    "id": "drums",
+    "title": "Drums",
+    "category": "左右敲一敲",
+    "description": "記號到達亮線時，點擊左鼓或右鼓。",
+    "href": "/drums/",
+    "action": "Play",
+    "art": "drums",
+    "theme": "rose",
+    "tags": ["左右雙鼓", "10 首經典旋律", "直式也能玩"]
   }
 ]

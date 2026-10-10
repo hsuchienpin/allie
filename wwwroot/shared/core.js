@@ -6,7 +6,7 @@
   'use strict';
   const names = ['Unicorn','Jellyfish','Penguin','Rainbow Princess','Flower Princess','Ocean Princess','Candy Princess','Unicorn Candy','Flower Candy','Unicorn Cake','Penguin Cake','Heart Cake','Berry Candy','Orange Candy','Grape Candy','Ice Cream','Rainbow Ice Pop','Berry Ice Pop','Pink Ball','Blue Ball','Unicorn Balloon','Heart Balloon','Playground','Playhouse'];
   const ids = ['unicorn','jellyfish','penguin','princess-rainbow','princess-flower','princess-ocean','princess-candy','cotton-unicorn','cotton-flower','cake-unicorn','cake-penguin','cake-heart','gummy-berry','gummy-orange','gummy-grape','softserve','pop-rainbow','pop-berry','ball-pink','ball-blue','balloon-unicorn','balloon-heart','playground','playhouse'];
-  const catalog = ids.map((id,index) => ({id,name:names[index],index,atlas:'new'}));
+  const catalog = ids.map((id,index) => ({id,name:names[index],index,atlas:'new',image:'assets/allie/v2/'+id+'.webp'}));
   const animals = ['Bunny','Bear','Cat','Dog','Dino','Elephant','Chick','Fox','Penguin','Turtle','Owl','Koala'];
   animals.forEach((name,index) => catalog.push({id:'legacy-slice-'+index,name,index,atlas:'slice'}));
   const old = ['heart','star','rainbow','sun','watermelon','flower','butterfly','rocket','castle','balloon','donut','crown'];
@@ -14,7 +14,7 @@
   const valid = id => catalog.some(item => item.id === id);
   const fresh = () => ({version:1,units:[],claims:{},migrations:{},preferences:{sound:true,reduced:false}});
   function claim(state, taskId, game, type) {
-    if (!['runner','slice','bowling'].includes(game) || typeof taskId !== 'string' || !taskId.startsWith(game+':') || taskId.length>180 || !ids.includes(type)) throw Error('Invalid reward');
+    if (!['runner','slice','bowling','piano','drums'].includes(game) || typeof taskId !== 'string' || !taskId.startsWith(game+':') || taskId.length>180 || !ids.includes(type)) throw Error('Invalid reward');
     if (Object.hasOwn(state.claims,taskId)) return {fresh:false,...state.claims[taskId]};
     const unit = {id:'reward:'+taskId,type,status:'available',draftId:null};
     state.units.push(unit); state.claims[taskId] = {unitId:unit.id,type};
@@ -46,5 +46,10 @@
     }
     return {...next,revision:expectedRevision+1};
   }
-  return {catalog,ids,fresh,claim,counts,migrate,updateDraft};
+  function inventory(state, includeEmpty=false) {
+    const stock=counts(state),latest=new Map();
+    state.units.forEach((unit,index)=>{if(unit.status==='available')latest.set(unit.type,index);});
+    return catalog.filter(item=>stock[item.id]||includeEmpty&&item.atlas==='new').slice().sort((a,b)=>Number(!!stock[b.id])-Number(!!stock[a.id])||(latest.get(b.id)??-1)-(latest.get(a.id)??-1)||a.index-b.index);
+  }
+  return {catalog,ids,fresh,claim,counts,migrate,updateDraft,inventory};
 });

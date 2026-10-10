@@ -1,11 +1,12 @@
 /* All user images stay in this page. Network reads are limited to bundled assets. */
 $(function () {
   'use strict';
+  if (window.AllieScreen?.isHost) return;
   const W = 1024, H = 768;
   const bottom = document.getElementById('layer-bottom'), top = document.getElementById('layer-top');
   const ctx = bottom.getContext('2d', { willReadFrequently: true }), lineCtx = top.getContext('2d', { willReadFrequently: true });
   const preview = document.getElementById('import-preview'), previewCtx = preview.getContext('2d');
-  const state = { color: '#ed786b', size: 20, material: 'pen', tool: 'pen', stamp: null, mask: new Uint8Array(W * H), history: [], dirty: false, busy: false, pointer: null, last: null, cardId: null, cards: [], stamps: [], imported: null, importResult: null, importSequence: 0, mode: 'generate', theme: '一隻可愛的獨角獸公主', palettePage: 0, exportUrl: null, exportBlob: null };
+  const state = { color: '#d7839b', size: 20, material: 'pen', tool: 'fill', stamp: null, mask: new Uint8Array(W * H), history: [], future: [], dirty: false, busy: false, pointer: null, last: null, cardId: null, cards: [], stamps: [], imported: null, importResult: null, importSequence: 0, mode: 'generate', theme: '一隻可愛的獨角獸公主', palettePage: 0, exportUrl: null, exportBlob: null };
   const stickers = StudioStickers.create({bottom,top,state,toast,syncUndo,closeTools});
   const colors = [
     ['#ed786b','Red'],['#e65258','Berry'],['#d7839b','Rose'],['#efb3bd','Pink'],['#f2a267','Orange'],['#e9bc69','Honey'],['#f2d574','Yellow'],['#ebe19c','Cream'],['#d5df9c','Sprout'],
@@ -37,59 +38,33 @@ $(function () {
   }
   let toastTimer;
   function toast(message) { clearTimeout(toastTimer); $('#toast').text(message).prop('hidden', false); toastTimer = setTimeout(() => $('#toast').prop('hidden', true), 4500); }
-  function busy(value) { state.busy = value; $('#busy').prop('hidden', !value); $('#undo').prop('disabled', value || !state.history.length); $('#use-import').prop('disabled', value || !state.importResult); }
+  function busy(value) { state.busy = value; $('#tools button,#open-gallery,#free-draw').prop('disabled',value); $('#busy').prop('hidden', !value); syncUndo(); $('#use-import').prop('disabled', value || !state.importResult); }
   function available() { if (state.busy || stickers.busy) { toast('稍等一下，畫布正在準備中。'); return false; } return true; }
   function activate(container, button) { $(container).find('button').removeClass('active').attr('aria-pressed', 'false'); $(button).addClass('active').attr('aria-pressed', 'true'); }
-  function snapshot() { state.history.push(stickers.snapshot()); if (state.history.length > 5) state.history.shift(); $('#undo').prop('disabled', false); }
-  function syncUndo() { $('#undo').prop('disabled', state.busy || !state.history.length); }
+  function snapshot() { state.history.push(stickers.snapshot()); if (state.history.length > 8) state.history.shift(); state.future=[]; syncUndo(); }
+  function syncUndo() { $('#undo').prop('disabled', state.busy || !state.history.length); $('#redo').prop('disabled', state.busy || !state.future.length); }
   let focused = false, savedScroll = 0, returnToLeave = false;
   const drawer = document.getElementById('tool-drawer');
-  // Move the original controls, rather than copying them or resetting either canvas.
-  const docked = [['.tools-panel', '#drawer-tools'], ['.palette-panel', '#drawer-palette'], ['.drawing-actions', '#drawer-actions']].map(([source, target]) => {
-    const element = document.querySelector(source), anchor = document.createComment('studio control home');
-    element.before(anchor); return { element, anchor, target: document.querySelector(target) };
-  });
   function fitDrawing() {
-    if (!focused) return;
-    const viewport = window.visualViewport;
-    const width = viewport ? viewport.width : window.innerWidth, height = viewport ? viewport.height : window.innerHeight;
-    document.body.style.setProperty('--focus-height', `${height}px`);
-    document.body.style.setProperty('--focus-width', `${width}px`);
-    // Safe areas and the control strip are accounted for by the surrounding flex box.
-    const surround = document.querySelector('.canvas-surround');
-    document.body.style.setProperty('--focus-canvas-width', `${Math.min(surround.clientWidth, surround.clientHeight * W / H)}px`);
+    const surround=document.querySelector('.canvas-surround'),availableHeight=surround.clientHeight-36;
+    const width=Math.max(120,Math.min(surround.clientWidth-30,availableHeight*W/H));
+    document.getElementById('canvas-frame').style.width=width+'px';
   }
-  function toolSummary() {
-    $('#focus-color').css('background-color', state.color);
-    $('#focus-tool-name').text({ pen: '✎ Pen', fill: '◒ Fill', stamp: '★ Stamps', sticker: '♡ Stickers' }[state.tool]);
-  }
-  function closeTools() { if (drawer.open) drawer.close(); $('#focus-tools').attr('aria-expanded', 'false'); toolSummary(); }
-  async function enterDrawing() {
-    if (!available() || focused) return;
-    finishStroke(); savedScroll = window.scrollY; focused = true;
-    docked.forEach(({ element, target }) => target.append(element));
-    document.body.classList.add('drawing-focus'); $('#focus-controls').prop('hidden', false);
-    toolSummary(); fitDrawing(); document.getElementById('focus-tools').focus();
-    try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }
-    catch (_) { /* The page layout still fills the available screen. */ }
-    fitDrawing();
-  }
-  async function exitDrawing() {
-    finishStroke(); closeTools(); focused = false;
-    docked.forEach(({ element, anchor }) => anchor.after(element));
-    document.body.classList.remove('drawing-focus'); $('#focus-controls').prop('hidden', true);
-    try { if (document.fullscreenElement) await document.exitFullscreen(); } catch (_) { /* Retain the artwork. */ }
-    window.scrollTo(0, savedScroll); document.getElementById('start-drawing').focus();
-  }
-  $('#start-drawing,#fullscreen').on('click', enterDrawing);
-  $('#focus-back').on('click', exitDrawing);
-  $('#focus-tools').on('click', () => { finishStroke(); drawer.showModal(); $('#focus-tools').attr('aria-expanded', 'true'); });
-  $('#drawer-done').on('click', closeTools);
-  drawer.addEventListener('close', () => { $('#focus-tools').attr('aria-expanded', 'false'); toolSummary(); });
-  window.addEventListener('resize', () => { finishStroke(); fitDrawing(); });
-  document.addEventListener('fullscreenchange', fitDrawing);
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitDrawing);
+  function toolSummary(){ $('#focus-color').css('background-color',state.color);$('#focus-tool-name').text({pen:'Draw',fill:'Color',stamp:'Stamps',sticker:'Sticker'}[state.tool]);document.body.dataset.tool=state.tool; }
+  function closeTools(){for(const id of ['tool-drawer','brush-drawer','stamp-drawer']){const d=document.getElementById(id);if(d.open)d.close();}$('#focus-tools').attr('aria-expanded','false');toolSummary();}
+  async function enterDrawing(){if(!available()||focused)return;finishStroke();savedScroll=scrollY;focused=true;document.body.classList.add('drawing-focus');$('#focus-controls').prop('hidden',false);try{await AllieScreen.enter();}catch(_){}fitDrawing();}
+  async function exitDrawing(){finishStroke();closeTools();focused=false;document.body.classList.remove('drawing-focus');$('#focus-controls').prop('hidden',true);window.scrollTo(0,savedScroll);fitDrawing();}
+  $('#start-drawing,#fullscreen').on('click',enterDrawing);$('#focus-back').on('click',exitDrawing);
+  $('#focus-tools').on('click',()=>{finishStroke();drawer.showModal();});$('#drawer-done').on('click',closeTools);
+  $('#open-gallery').on('click',()=>{finishStroke();document.getElementById('paper-drawer').showModal();});
+  $('#brush-open').on('click',()=>{finishStroke();document.getElementById('brush-drawer').showModal();});
+  $('#studio-help').on('click',()=>document.getElementById('studio-help-dialog').showModal());
+  drawer.addEventListener('close',toolSummary);
+  window.addEventListener('resize',()=>{finishStroke();fitDrawing();});document.addEventListener('fullscreenchange',fitDrawing);
+  new ResizeObserver(fitDrawing).observe(document.querySelector('.canvas-surround'));if(window.visualViewport)window.visualViewport.addEventListener('resize',fitDrawing);
+  toolSummary();fitDrawing();
   $('.brand').on('click', e => { e.preventDefault(); if (focused) exitDrawing(); else window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  AllieScreen.onHome(()=>document.querySelector('.park-link').click());
   $('.park-link').on('click', e => {
     e.preventDefault(); finishStroke();
     if (state.busy) { toast('請等畫布準備好，再返回樂園。'); return; }
@@ -117,10 +92,10 @@ $(function () {
     c.drawImage(img, (W - width) / 2, (H - height) / 2, width, height);
     return c.getImageData(0, 0, W, H).data;
   }
-  function applyCard(result, title, level, id = null) {
+  function applyCard(result, title, id = null) {
     ctx.clearRect(0, 0, W, H); lineCtx.putImageData(new ImageData(new Uint8ClampedArray(result.rgba), W, H), 0, 0);
-    state.mask = new Uint8Array(result.mask); state.history = []; state.dirty = false; state.cardId = id;
-    $('#card-title').text(title); $('#card-stars').text('Level '+level);
+    state.mask = new Uint8Array(result.mask); state.history = []; state.future=[]; state.dirty = false; state.cardId = id;
+    $('#card-title').text(title);
     $('.gallery-card').removeClass('selected').attr('aria-pressed', 'false'); if (id) $(`[data-card="${id}"]`).addClass('selected').attr('aria-pressed', 'true'); syncUndo();
   }
   async function loadCard(card, ask = true) {
@@ -128,42 +103,40 @@ $(function () {
     if (ask && !await permitReplacement()) return;
     if (ask) { try { await stickers.flush(); } catch(e) { toast(e.message); return; } }
     busy(true);
-    try { const source = rasterize(await image(card.imagePath)); const result = await pixels('lineart', { rgba: source.buffer, threshold: 170, repair: false }); applyCard(result, card.name, card.difficultyLevel, card.id); await stickers.restore(card.id); }
+    try { const source = rasterize(await image(card.imagePath)); const result = await pixels('lineart', { rgba: source.buffer, threshold: 170, repair: false }); applyCard(result, card.name, card.id); await stickers.restore(card.id); document.getElementById('paper-drawer').close(); }
     catch (e) { toast(e.message); } finally { busy(false); }
   }
-  function gallery(level = 0) {
-    const list = state.cards.filter(c => !level || c.difficultyLevel === level); $('#gallery').empty();
+  function gallery() {
+    const list = state.cards; $('#gallery').empty();
     for (const card of list) {
-      const button = $('<button>', { class: 'gallery-card', 'data-card': card.id, 'aria-label': `${card.name}, Level ${card.difficultyLevel}`, 'aria-pressed': String(state.cardId === card.id) });
+      const button = $('<button>', { class: 'gallery-card', 'data-card': card.id, 'aria-label': card.name, 'aria-pressed': String(state.cardId === card.id) });
       if (state.cardId === card.id) button.addClass('selected');
-      button.append($('<img>', { src: Allie.url(card.imagePath), alt: '', loading: 'lazy' }), $('<strong>').text(card.name), $('<small>').text('Level '+card.difficultyLevel));
+      button.append($('<img>', { src: Allie.url(card.imagePath), alt: '', decoding: 'async' }), $('<strong>').text(card.name));
       button.on('click', () => loadCard(card)); $('#gallery').append(button);
     }
     $('#gallery-count').text(`${list.length} pictures`);
   }
-  $('#difficulty-filter button').on('click', function () { activate('#difficulty-filter', this); gallery(Number(this.dataset.level)); });
   function palette() {
     $('#palette').empty();
-    const wide = window.matchMedia('(min-width:1500px)').matches;
-    const entries = wide ? colors : colors.slice(state.palettePage * 18, state.palettePage * 18 + 18);
-    $('#palette-page').prop('hidden', wide);
+    const entries=colors.slice(state.palettePage*9,state.palettePage*9+9);
+    $('#palette-page').prop('hidden',false);
     for (const [hex, name] of entries) {
       const button = $('<button>', { class: 'color-button', title: name, 'aria-label': name, 'aria-pressed': String(state.color === hex) }).css('background-color', hex);
       if (state.color === hex) button.addClass('active');
       button.on('click', () => { state.color = hex; $('#current-color').css('background-color', hex); $('#color-name').text(name); palette(); closeTools(); }); $('#palette').append(button);
     }
   }
-  $('#palette-page').on('click', () => { state.palettePage = 1 - state.palettePage; palette(); });
+  $('#palette-page').on('click', () => { state.palettePage = (state.palettePage + 1) % 4; palette(); });
   window.matchMedia('(min-width:1500px)').addEventListener('change', palette);
   $('#current-color').css('background-color', state.color); palette();
-  $('#brush-size button').on('click', function () { state.size = Number(this.dataset.size); activate('#brush-size', this); closeTools(); });
-  $('#brush-material button').on('click', function () { state.material = this.dataset.material; activate('#brush-material', this); closeTools(); });
+  $('#brush-size button').on('click', function () { state.size = Number(this.dataset.size); activate('#brush-size', this); });
+  $('#brush-material button').on('click', function () { state.material = this.dataset.material; activate('#brush-material', this); });
   $('#tools button').on('click', function () {
     if(!available())return;
     state.tool = this.dataset.tool; activate('#tools', this); $('#canvas-frame').removeClass('fill stamp').addClass(state.tool);
     $('#stamp-picker').prop('hidden', state.tool !== 'stamp'); stickers.setTool();
     $('#drawing-hint').text({ pen: '用喜歡的顏色，把想像力畫出來！', fill: '點一下封閉的區塊，變出繽紛顏色。', stamp: '挑個小印章，點一下畫布！', sticker: '選貼紙，再點畫布放上。每張只能貼一次。' }[state.tool]);
-    toolSummary(); if (state.tool !== 'stamp') closeTools();
+    toolSummary();closeTools();if(state.tool==='sticker')drawer.showModal();if(state.tool==='stamp')document.getElementById('stamp-drawer').showModal();
   });
   function position(e) { const r = bottom.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
   function paintSegment(a, b) {
@@ -195,7 +168,7 @@ $(function () {
       const before = ctx.getImageData(0, 0, W, H), historyBefore=stickers.snapshot(); busy(true);
       try {
         const result = await pixels('fill', { rgba: before.data.slice().buffer, mask: state.mask.slice().buffer, x: p.x, y: p.y, color: ColoringCore.hexToRgb(state.color) });
-        if (result.changed) { state.history.push(historyBefore); if (state.history.length > 5) state.history.shift(); ctx.putImageData(new ImageData(new Uint8ClampedArray(result.rgba), W, H), 0, 0); state.dirty = true; stickers.scheduleSave(); }
+        if (result.changed) { state.history.push(historyBefore); if (state.history.length > 8) state.history.shift(); state.future=[]; ctx.putImageData(new ImageData(new Uint8ClampedArray(result.rgba), W, H), 0, 0); state.dirty = true; stickers.scheduleSave(); }
       } catch (err) { toast(err.message); } finally { busy(false); }
     }
   });
@@ -205,13 +178,14 @@ $(function () {
     for (const sample of samples.length ? samples : [e]) { const p = position(sample); paintSegment(state.last, p); state.last = p; }
   });
   ['pointerup','pointercancel','lostpointercapture'].forEach(name => bottom.addEventListener(name, finishStroke)); window.addEventListener('blur', () => finishStroke());
-  $('#undo').on('click', async () => { if (!available() || !state.history.length) return; busy(true); const item=state.history[state.history.length-1]; if(await stickers.undo(item)) {state.history.pop();state.dirty=true;} busy(false);syncUndo(); });
+  async function historyStep(redo){if(!available())return;const from=redo?state.future:state.history,to=redo?state.history:state.future;if(!from.length)return;finishStroke();busy(true);const before=stickers.snapshot(),item=from[from.length-1];if(await stickers.undo(item)){from.pop();to.push(before);state.dirty=true;}busy(false);syncUndo();}
+  $('#undo').on('click',()=>historyStep(false));$('#redo').on('click',()=>historyStep(true));
   $('#clear').on('click', async () => { if (!available() || !state.dirty) return; if (await confirmAction('Clear colors?' , '黑色線稿會留下。清除後也可以按 Undo 找回顏色。')) { snapshot(); ctx.clearRect(0, 0, W, H); state.dirty = true; stickers.scheduleSave(); } });
-  $('#free-draw').on('click', async () => { if (!available() || !await permitReplacement()) return; try { await stickers.flush(); } catch(e) { toast(e.message); return; } applyCard({ rgba: new Uint8ClampedArray(W * H * 4).buffer, mask: new Uint8Array(W * H).buffer }, 'Free Draw', 1); await stickers.restore('free'); });
-  function chooseFile() { if (available()) document.getElementById('file-input').click(); }
+  $('#free-draw').on('click', async () => { if (!available() || !await permitReplacement()) return; try { await stickers.flush(); } catch(e) { toast(e.message); return; } applyCard({ rgba: new Uint8ClampedArray(W * H * 4).buffer, mask: new Uint8Array(W * H).buffer }, 'Free Draw'); await stickers.restore('free'); document.getElementById('paper-drawer').close(); });
+  function chooseFile() { if (available()) {document.getElementById('paper-drawer').close();document.getElementById('file-input').click();} }
   $('#open-image').on('click', chooseFile);
   $('#magic-import').on('click', () => { document.getElementById('magic-dialog').close(); chooseFile(); });
-  async function updatePreview(estimate = false) {
+  async function updatePreview() {
     if (!state.imported) return; const sequence = ++state.importSequence;
     state.importResult = null; $('#use-import').prop('disabled', true);
     const threshold = Number($('#threshold').val()); $('#threshold-value').text(threshold);
@@ -219,7 +193,7 @@ $(function () {
       const result = await pixels('lineart', { rgba: state.imported.slice().buffer, threshold, repair: $('#repair-gaps').prop('checked') });
       if (sequence !== state.importSequence || !state.imported) return;
       state.importResult = result; previewCtx.clearRect(0,0,W,H); previewCtx.putImageData(new ImageData(new Uint8ClampedArray(result.rgba), W, H), 0, 0);
-      if (estimate) $('#import-difficulty').val(result.difficulty); $('#use-import').prop('disabled', false);
+      $('#use-import').prop('disabled', false);
     } catch (e) { if (sequence === state.importSequence) toast(e.message); }
   }
   let previewTimer;
@@ -232,28 +206,27 @@ $(function () {
       const bytes = await file.arrayBuffer(), info = ImageFile.inspect(bytes); url = URL.createObjectURL(new Blob([bytes], { type: info.type }));
       const img = await image(url); if (img.naturalWidth * img.naturalHeight > 24000000) throw new Error('圖片尺寸太大，請先縮小圖片。');
       state.imported = rasterize(img); state.importResult = null; $('#threshold').val(170); $('#repair-gaps').prop('checked', true);
-      document.getElementById('import-dialog').showModal(); await updatePreview(true);
+      document.getElementById('import-dialog').showModal(); await updatePreview();
     } catch (e) { toast(e.message); } finally { if (url) URL.revokeObjectURL(url); busy(false); }
   });
   document.getElementById('import-dialog').addEventListener('close', () => { clearTimeout(previewTimer); state.importSequence++; });
   $('#use-import').on('click', async () => {
     if (!available() || !state.importResult) return;
-    const result = state.importResult, level = Number($('#import-difficulty').val()); document.getElementById('import-dialog').close();
+    const result = state.importResult; document.getElementById('import-dialog').close();
     if (!await permitReplacement()) { document.getElementById('import-dialog').showModal(); return; }
-    try { await stickers.flush(); } catch(e) {toast(e.message); return;} applyCard(result, 'My Picture', level); await stickers.restore('import:'+crypto.randomUUID()); state.imported = null; state.importResult = null; enterDrawing(); toast('準備好了，來幫它加上顏色吧！');
+    try { await stickers.flush(); } catch(e) {toast(e.message); return;} applyCard(result, 'My Picture'); await stickers.restore('import:'+crypto.randomUUID()); state.imported = null; state.importResult = null; enterDrawing(); toast('準備好了，來幫它加上顏色吧！');
   });
   const themes = [['🦄','Unicorn','一隻可愛的獨角獸'],['👑','Princess','一位原創獨角獸公主'],['🪼','Jellyfish','一隻微笑水母'],['🐧','Penguin','一隻可愛企鵝'],['🛝','Playground','戶外遊樂場'],['🍦','Ice Cream','霜淇淋與水果冰棒'],['🎈','Balloons','各式造型氣球'],['🍭','Candy','造型棉花糖與造型雞蛋糕']];
   themes.forEach(([emoji, name, topic], i) => { const button = $('<button>', { class: i === 0 ? 'active' : '', 'aria-pressed': String(i === 0) }).text(`${emoji} ${name}`); button.on('click', () => { state.theme = topic; $('#custom-topic').val(''); activate('#themes', button); prompt(); }); $('#themes').append(button); });
-  const levels = ['單一完整主體，如烏龜，包含少量有意義的結構細節與大封閉區塊','簡單場景，如帆船與海面，以數個物件和清楚的大中型封閉區塊構成','較豐富的場景，如簡化麵包店，物件較多但不擁擠，以大中型封閉區塊呈現，刪除磚紋、細碎裝飾與狹窄區塊'];
   function prompt() {
-    const topic = String($('#custom-topic').val()).trim() || state.theme, level = Number($('#prompt-difficulty').val());
+    const topic = String($('#custom-topic').val()).trim() || state.theme;
     const first = state.mode === 'photo' ? '請將我在這個 AI 平台提供的照片，重新繪製成適合 2～8 歲兒童的可愛卡通著色線稿。保留主要主體，簡化背景；不要直接把照片轉成灰階。' : `請畫一張適合 2～8 歲兒童的卡通著色線稿，主題是「${topic}」。`;
-    $('#prompt-output').val(`${first}\n難度要求：${levels[level - 1]}。所有難度都必須適合手指點選著色，用粗黑線與寬闊封閉區塊，避免微小或細長區域；難度來自不同構圖的物件和結構細節，不要藉由添加小點或重複裝飾增加難度。\n畫面採橫向 4:3 構圖，主體完整並保留邊界留白。純白背景、清晰純黑線條、封閉輪廓；不要填黑大面積區塊，不要彩色、陰影、灰階、漸層、文字、簽名或浮水印。內容必須溫和、可愛、適合幼兒，不要暴力或令人害怕的元素。\n請輸出可下載的靜態 PNG 或 JPG 圖片檔案，建議 1024×768 像素。`);
+    $('#prompt-output').val(`${first}\n以單一可愛主體為主，約 15～25 個寬闊封閉區塊，適合 6 歲孩子用手指點選著色。用粗黑線，保留有意義的結構細節，避免微小、細長區域與重複裝飾。\n畫面採橫向 4:3 構圖，主體完整並保留邊界留白。純白背景、清晰純黑線條、封閉輪廓；不要填黑大面積區塊，不要彩色、陰影、灰階、漸層、文字、簽名或浮水印。內容必須溫和、可愛、適合幼兒，不要暴力或令人害怕的元素。\n請輸出可下載的靜態 PNG 或 JPG 圖片檔案，建議 1024×768 像素。`);
     $('#photo-note').prop('hidden', state.mode !== 'photo'); $('#themes,.text-label:has(#custom-topic)').prop('hidden', state.mode === 'photo');
   }
   $('#prompt-mode button').on('click', function () { state.mode = this.dataset.mode; activate('#prompt-mode', this); prompt(); });
-  $('#custom-topic').on('input', prompt); $('#prompt-difficulty').on('change', prompt);
-  $('#magic').on('click', () => { prompt(); document.getElementById('magic-dialog').showModal(); });
+  $('#custom-topic').on('input', prompt);
+  $('#magic').on('click', () => { document.getElementById('paper-drawer').close(); prompt(); document.getElementById('magic-dialog').showModal(); });
   $('#copy-prompt').on('click', async () => {
     const output = document.getElementById('prompt-output');
     try { if (!navigator.clipboard || !window.isSecureContext) throw new Error(); await navigator.clipboard.writeText(output.value); toast('提示詞已複製！交給你自己的 AI 產生圖片吧。'); }
@@ -274,6 +247,7 @@ $(function () {
   $('#share-image').on('click', async () => { if (!state.exportBlob) return; const file = new File([state.exportBlob], `my_drawing.${state.exportBlob.type === 'image/png' ? 'png' : 'jpg'}`, { type: state.exportBlob.type }); try { await navigator.share({ files: [file], title: '我的小小作品' }); } catch (e) { if (e.name !== 'AbortError') toast('無法分享，可以長按預覽圖片儲存。'); } });
   document.getElementById('export-dialog').addEventListener('close', () => { if (state.exportUrl) URL.revokeObjectURL(state.exportUrl); state.exportUrl = null; state.exportBlob = null; $('#export-preview').removeAttr('src').prop('hidden', true); $('#export-help,#share-image').prop('hidden', true); if (returnToLeave) { returnToLeave = false; document.getElementById('leave-dialog').showModal(); } });
   window.addEventListener('beforeunload', e => { if (state.dirty && !window.indexedDB) { e.preventDefault(); e.returnValue = ''; } });
+  busy(true);
   Promise.all([$.getJSON(Allie.url('gallery.json')), $.getJSON(Allie.url('stamps.json'))]).then(async ([cards, stamps]) => {
     state.cards = cards; gallery();
     for (const stamp of stamps) {
@@ -283,6 +257,9 @@ $(function () {
         button.on('click', () => { state.stamp = img; activate('#stamp-picker', button); closeTools(); }); $('#stamp-picker').append(button);
       } catch (_) { toast('部分印章無法載入，其他工具仍可使用。'); }
     }
-    const last=await Allie.lastDraft().catch(()=>null); if(last==='free'||last?.startsWith('import:')) {await stickers.restore(last);} else await loadCard(cards.find(c=>c.id===last)||cards[0], false);
-  }).catch(() => toast('圖庫暫時無法載入，可以先在空白畫布畫畫。'));
+    const last=await Allie.lastDraft().catch(()=>null), listed=cards.find(c=>c.id===last);
+    // Older papers remain restorable from their saved pixels when removed from the picker.
+    if(last&&!listed&&await Allie.getDraft(last).catch(()=>null)){try{await stickers.restore(last);}finally{busy(false);}}else {busy(false);await loadCard(listed||cards[0],false);}
+    const requested=new URLSearchParams(location.search).get('sticker');if(requested)await stickers.choose(requested);fitDrawing();
+  }).catch(() => {busy(false);toast('圖庫暫時無法載入，可以先在空白畫布畫畫。');});
 });

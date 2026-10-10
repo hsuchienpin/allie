@@ -5,18 +5,14 @@
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
   const TARGET = 20, KEY = 'little-game-park.slice.v1';
-  const THEMES = {
-    fruit: { name: 'Candy', items: ['watermelon', 'apple', 'banana', 'grapes'], colors: ['#ff6778', '#a9df64', '#ffe17a'] },
-    toys: { name: 'Cakes', items: ['giftPink', 'giftMint', 'giftPurple'], colors: ['#ff9bbb', '#7bdcca', '#ffdb6d'] },
-    space: { name: 'Ice Pops', items: ['meteor', 'ufo', 'alien'], colors: ['#cfa8ff', '#7de5ed', '#ffe18a'] }
-  };
-  const MODES = {
-    gentle: { name: 'Easy', travel: 17, interval: 2.9, max: 3, hit: 1.3, balloonHits: 5, balloonTravel: 24 },
-    happy: { name: 'More', travel: 11, interval: 1.9, max: 5, hit: 1.2, balloonHits: 8, balloonTravel: 20 }
-  };
+  const ITEMS = Object.freeze(['watermelon','apple','banana','grapes','cottonFlower','giftPink','giftMint','giftPurple','meteor','ufo','alien']);
+  // One shared round, using the former faster pace. Legacy choices cannot change it.
+  const PLAY = Object.freeze({travel:11,interval:1.9,max:5,hit:1.2,balloonHits:8,balloonTravel:20});
+  const COLORS = ['#e5a2b5','#b9a7cf','#b1d1bf','#e9c484'];
+  function materialFor(type){return ['giftPink','giftMint','giftPurple'].includes(type)?'cake':['meteor','ufo','alien'].includes(type)?'ice':['grapes','cottonFlower'].includes(type)?'cotton':'gummy';}
   const ITEM_COLORS = {
-    watermelon: ['#ff6778','#9bda62','#e3f5b8'], apple: ['#ff727d','#ffc28a','#ffe19b'],
-    banana: ['#ffdb64','#fff1aa','#ffc15d'], grapes: ['#b782e8','#e7b4f7','#8f6cce']
+    watermelon: ['#db869e','#f3a7b7','#c46d8a'], apple: ['#edaa69','#f4cb8f','#db954d'],
+    banana: ['#b896d0','#dbc5ed','#aa82c0'], grapes: ['#b782e8','#e7b4f7','#8f6cce']
   };
   const STICKERS = ['小兔子', '小熊', '小貓咪', '小狗狗', '小恐龍', '小象', '小雞', '小狐狸', '小企鵝', '小烏龜', '小貓頭鷹', '無尾熊'];
   function seededRandom(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -31,7 +27,7 @@
     constructor(storage, reduced = false) {
       this.storage = storage; this.available = true;
       this.data = { sessions: 0, slices: 0, energy: 0, stickers: [], pending: null, serial: 0,
-        settings: { theme: 'fruit', mode: 'gentle', sound: true, tap: true, vibration: false, reduced } };
+        settings: { sound: true, vibration: false, reduced } };
       try {
         const raw = JSON.parse(storage.getItem(KEY) || 'null');
         if (raw && typeof raw === 'object') {
@@ -40,9 +36,7 @@
           this.data.energy = Math.min(TARGET - 1, count(raw.energy));
           if (Array.isArray(raw.stickers)) this.data.stickers = [...new Set(raw.stickers.filter(i => Number.isInteger(i) && i >= 0 && i < STICKERS.length))];
           const s = raw.settings || {};
-          if (THEMES[s.theme]) this.data.settings.theme = s.theme;
-          if (MODES[s.mode]) this.data.settings.mode = s.mode;
-          for (const k of ['sound', 'tap', 'vibration', 'reduced']) if (typeof s[k] === 'boolean') this.data.settings[k] = s[k];
+          for (const k of ['sound', 'vibration', 'reduced']) if (typeof s[k] === 'boolean') this.data.settings[k] = s[k];
           if (raw.pending && Number.isSafeInteger(raw.pending.id) && raw.pending.id > 0 && Number.isInteger(raw.pending.sticker) && raw.pending.sticker >= 0 && raw.pending.sticker < STICKERS.length) {
             this.data.pending = { id: raw.pending.id, sticker: raw.pending.sticker };
             this.data.serial = Math.max(this.data.serial, raw.pending.id); this.data.energy = 0;
@@ -70,8 +64,7 @@
   }
   class Game {
     constructor(options = {}) {
-      this.theme = THEMES[options.theme] ? options.theme : 'fruit';
-      this.mode = MODES[options.mode] ? options.mode : 'gentle'; this.spec = MODES[this.mode];
+      this.spec = PLAY;
       this.width = options.width || 960; this.height = options.height || 600;
       this.rng = options.rng || Math.random; this.reduced = !!options.reduced;
       this.energy = Math.min(TARGET - 1, count(options.energy)); this.state = 'running';
@@ -89,7 +82,7 @@
       const r = balloon ? Math.min(this.width * .34, this.height * .30) : clamp(Math.min(this.width, this.height) * .105, 31, 82);
       const margin = r * 1.12;
       const homeX = balloon ? this.width / 2 : margin + this.rng() * (this.width - 2 * margin);
-      const items = THEMES[this.theme].items;
+      const items = ITEMS;
       const o = { id: ++this.serial, type: balloon ? 'balloon' : items[Math.floor(this.rng() * items.length)],
         x: homeX, homeX, y: -r * 1.25, r, phase: this.rng() * Math.PI * 2, amplitude: balloon ? 0 : Math.min(this.width * .025, r * .18),
         vy: (this.height + r * 2.5) / (balloon ? this.spec.balloonTravel : this.spec.travel), hits: 0, lastHit: -Infinity };
@@ -120,7 +113,7 @@
       }
     }
     burst(x, y, n, bubble = false, fullscreen = false, palette = null) {
-      const colors = palette || THEMES[this.theme].colors;
+      const colors = palette || COLORS;
       n = this.reduced ? Math.min(n, 18) : n;
       for (let i = 0; i < n; i++) {
         if (this.particles.length >= (this.reduced ? 90 : 360)) this.particles.shift();
@@ -132,24 +125,21 @@
           angle: a, spin: (this.rng() - .5) * 6 });
       }
     }
-    cut(o) {
+    cut(o, direction = {x:0,y:1}) {
       if (this.state !== 'running' || !this.objects.includes(o)) return false;
       this.objects.splice(this.objects.indexOf(o), 1); this.cuts++;
       const balloon = o.type === 'balloon'; this.energy = Math.min(TARGET, this.energy + (balloon ? 3 : 1));
-      this.burst(o.x, o.y, balloon ? 140 : 26, false, balloon, ITEM_COLORS[o.type]);
+      const material=materialFor(o.type);
+      const palette=material==='cake'?['#d6a35e','#edc78e','#b7854d']:material==='ice'?['#d5e6ed','#f2dce2','#fff3e2']:material==='cotton'?['#e9d3e6','#f5e4e8','#d7e8df']:ITEM_COLORS[o.type];
+      this.burst(o.x, o.y, balloon ? 100 : 18, false, balloon, palette);
+      if(!balloon)for(const p of this.particles.slice(-Math.min(18,this.particles.length))){p.material=material;p.shape=material==='cake'?2:1;p.r*=material==='cake'?.45:.65;p.gravity=material==='cotton'?35:material==='cake'?330:190;}
+      const cutAngle=Math.atan2(direction.y,direction.x),nx=-direction.y,ny=direction.x;
       if (!balloon) {
         for (const side of [-1, 1]) {
           if (this.pieces.length >= 30) this.pieces.shift();
-          this.pieces.push({ type: o.type, side, x: o.x, y: o.y, r: o.r, vx: side * (75 + this.rng() * 65), vy: -80 - this.rng() * 55,
+          this.pieces.push({ type: o.type, side, x: o.x, y: o.y, r: o.r, material, cutAngle, vx: side * nx * (75 + this.rng() * 65), vy: side * ny * 75 - 80,
             gravity: 230, angle: 0, spin: this.reduced ? 0 : side * (1 + this.rng()), life: 1.6, maxLife: 1.6 });
         }
-      }
-      let surprise = null;
-      if (this.theme === 'toys') surprise = ['bear', 'car', 'robot'][Math.floor(this.rng() * 3)];
-      if (this.theme === 'space') surprise = o.type === 'meteor' ? 'gem' : 'star';
-      if (surprise) {
-        if (this.surprises.length >= 12) this.surprises.shift();
-        this.surprises.push({ type: surprise, x: o.x, y: o.y, r: o.r * .7, vx: 0, vy: -100, gravity: 60, angle: 0, spin: .25, life: 2, maxLife: 2 });
       }
       this.events.push({ kind: 'slice', object: o, energy: this.energy, balloon });
       if (this.energy >= TARGET) { this.state = 'chest'; this.gestures.clear(); this.events.push({ kind: 'chest' }); }
@@ -164,7 +154,7 @@
       for (const o of [...this.objects]) {
         if (this.state !== 'running') break;
         const radius = o.r * this.spec.hit;
-        if (o.type !== 'balloon') { if (segmentDistance(a, b, o) <= radius && this.cut(o)) hits++; continue; }
+        if (o.type !== 'balloon') { if (segmentDistance(a, b, o) <= radius && this.cut(o,direction)) hits++; continue; }
         let g = this.gestures.get(pointer);
         if (!g || g.id !== o.id) g = { id: o.id, inside: false, distance: 0, direction: null, legHit: false };
         const touches = segmentDistance(a, b, o) <= radius;
@@ -197,5 +187,5 @@
     nextRound() { this.energy = 0; this.cuts = 0; this.balloonUsed = false; this.timer = .4; this.objects.length = 0; this.gestures.clear(); this.lastTap = -Infinity; this.state = 'running'; }
     takeEvents() { return this.events.splice(0); }
   }
-  return { TARGET, KEY, THEMES, MODES, STICKERS, Records, Game, segmentDistance, seededRandom };
+  return { TARGET, KEY, ITEMS, PLAY, materialFor, STICKERS, Records, Game, segmentDistance, seededRandom };
 });
