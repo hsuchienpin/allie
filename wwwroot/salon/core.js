@@ -30,12 +30,25 @@
     return strands;
   }
   const template = hair();
-  function fresh() { return {version: 1, lengths: template.map(() => 1), strokes: []}; }
+  const naturalStyle = () => ({straight: 0, curl: 0, volume: 0, extent: 1});
+  const styles = {
+    straight: {straight: 1, curl: 0, volume: 0},
+    inward: {straight: .35, curl: -1, volume: 0},
+    outward: {straight: .35, curl: 1, volume: 0},
+    volume: {straight: 0, curl: 0, volume: 1}
+  };
+  function fresh() { return {version: 2, lengths: template.map(() => 1), styles: template.map(naturalStyle), strokes: []}; }
   function normalize(value) {
     const result = fresh();
-    if (!value || value.version !== 1) return result;
+    if (!value || ![1, 2].includes(value.version)) return result;
     if (Array.isArray(value.lengths)) result.lengths = template.map((_, i) =>
       Number.isFinite(value.lengths[i]) ? clamp(value.lengths[i], .16, 1) : 1);
+    if (value.version === 2 && Array.isArray(value.styles)) result.styles = template.map((_, i) => {
+      const s = value.styles[i];
+      if (!s || typeof s !== 'object') return naturalStyle();
+      const safe = (key, low, high, fallback = 0) => Number.isFinite(s[key]) ? clamp(s[key], low, high) : fallback;
+      return {straight: safe('straight', 0, 1), curl: safe('curl', -1, 1), volume: safe('volume', 0, 1), extent: safe('extent', .16, 1, 1)};
+    });
     if (Array.isArray(value.strokes)) result.strokes = value.strokes.slice(-MAX_STROKES).flatMap(s => {
       if (!s || !['lipstick', 'eyeshadow'].includes(s.tool) || !/^#[a-f0-9]{6}$/i.test(s.color) || !Array.isArray(s.points)) return [];
       const points = s.points.slice(0, 2500).filter(p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
@@ -44,13 +57,21 @@
     });
     return result;
   }
-  function point(strand, t, bend = 0) {
+  function point(strand, t, bend = 0, style) {
     const sweep = strand.layer === 'fringe' ? strand.side * 28 * Math.sin(t * 1.3) :
       strand.side * (23 * Math.sin(t * Math.PI * .65) + 10 * t) + Math.sin(t * 5 + strand.phase) * 8 * t;
-    return {x: strand.x + sweep + bend * t * t, y: strand.y + strand.full * t - Math.abs(bend) * .12 * t * t};
+    const straight = style?.straight || 0, curl = style?.curl || 0, volume = style?.volume || 0;
+    // The styled extent is retained when cutting, so scissors remove the actual curved tip.
+    const extent = style?.extent || 1, u = clamp(t / extent, 0, 1), arc = clamp((u - .52) / .48, 0, 1) * 2.4;
+    const radius = Math.min(66, strand.full * extent * .22);
+    const curlX = strand.side * curl * radius * (1 - Math.cos(arc));
+    const curlY = -Math.abs(curl) * radius * (arc - Math.sin(arc));
+    const lift = Math.sin(u * Math.PI);
+    return {x: strand.x + sweep * (1 - straight) + curlX + strand.side * volume * (65 * lift + 9 * u) + bend * t * t,
+      y: strand.y + strand.full * t + curlY - volume * 24 * lift - Math.abs(bend) * .12 * t * t};
   }
-  function samples(strand, length, bend = 0) {
-    return Array.from({length: 23}, (_, i) => { const t = length * i / 22; return {...point(strand, t, bend), t}; });
+  function samples(strand, length, bend = 0, style) {
+    return Array.from({length: 37}, (_, i) => { const t = length * i / 36; return {...point(strand, t, bend, style), t}; });
   }
   function distanceToSegment(p, a, b) {
     const dx = b.x - a.x, dy = b.y - a.y, length = dx * dx + dy * dy;
@@ -66,7 +87,7 @@
     const removed = [];
     for (const s of template) {
       if (s.layer === 'back' && covered(p.x, p.y)) continue;
-      const length = state.lengths[s.id], bend = motion[s.id]?.bend || 0, list = samples(s, length, bend);
+      const length = state.lengths[s.id], bend = motion[s.id]?.bend || 0, style = state.styles?.[s.id], list = samples(s, length, bend, style);
       let next = length;
       for (let i = 1; i < list.length; i++) {
         const hit = distanceToSegment(p, list[i - 1], list[i]);
@@ -76,22 +97,51 @@
         }
       }
       if (next < length - .006) {
-        removed.push({strand: s, from: next, to: length, bend});
+        removed.push({strand: s, from: next, to: length, bend, style: style && clone(style)});
         state.lengths[s.id] = next;
       }
     }
     return removed;
   }
   function newMotion() { return template.map(() => ({bend: 0, velocity: 0})); }
+  function styleAt(state, motion, wind, seconds) {
+    const target = Object.prototype.hasOwnProperty.call(styles, wind?.mode) ? styles[wind.mode] : null;
+    if (!target || !Number.isFinite(wind.x) || !Number.isFinite(wind.y) || !Number.isFinite(seconds) || seconds <= 0) return 0;
+    const dt = Math.min(seconds, .05), power = clamp(Number(wind.power) || 1, .4, 1.4);
+    let changed = 0;
+    for (const strand of template) {
+      const old = state.styles[strand.id], list = samples(strand, state.lengths[strand.id], motion[strand.id]?.bend || 0, old);
+      let distance = Infinity;
+      for (let i = 1; i < list.length; i++) {
+        const a = list[i - 1], b = list[i];
+        if (strand.layer === 'back' && covered((a.x + b.x) / 2, (a.y + b.y) / 2)) continue;
+        distance = Math.min(distance, distanceToSegment(wind, a, b).distance);
+      }
+      // A small brush radius lets the two sides be styled independently.
+      if (distance >= 95) continue;
+      const rate = 1 - Math.exp(-3.8 * dt * power * (1 - distance / 95));
+      let touched = false;
+      for (const key of ['straight', 'curl', 'volume']) {
+        const value = old[key] + (target[key] - old[key]) * rate;
+        const next = Math.abs(value - target[key]) < .003 ? target[key] : value;
+        if (Math.abs(next - old[key]) > .000001) { old[key] = next; touched = true; }
+      }
+      const extent = old.extent + (state.lengths[strand.id] - old.extent) * rate;
+      const nextExtent = Math.abs(extent - state.lengths[strand.id]) < .0005 ? state.lengths[strand.id] : extent;
+      if (Math.abs(nextExtent - old.extent) > .000001) { old.extent = nextExtent; touched = true; }
+      if (touched) changed++;
+    }
+    return changed;
+  }
   function advance(state, motion, wind, seconds) {
     const dt = clamp(seconds, 0, .035) * 60;
     let active = false;
     for (const s of template) {
-      const m = motion[s.id], mid = point(s, state.lengths[s.id] * .65, m.bend);
+      const m = motion[s.id], mid = point(s, state.lengths[s.id] * .65, m.bend, state.styles?.[s.id]);
       const distance = wind ? Math.hypot(mid.x - wind.x, (mid.y - wind.y) * .65) : Infinity;
       const falloff = Math.max(0, 1 - distance / 275);
       const direction = wind ? (mid.x >= wind.x ? 1 : -1) : 0;
-      const target = direction * 125 * falloff * (wind?.power || 1) * state.lengths[s.id];
+      const target = direction * 125 * falloff * (wind?.power || 1) * state.lengths[s.id] * (wind?.mode ? .3 : 1);
       m.velocity += ((target - m.bend) * .035 - m.velocity * .19) * dt;
       m.bend = clamp(m.bend + m.velocity * dt, -145, 145);
       if (Math.abs(m.bend) + Math.abs(m.velocity) < .04 && !wind) { m.bend = 0; m.velocity = 0; }
@@ -113,5 +163,5 @@
     undo() { if (!this.past.length) return false; this.future.push(this.current); this.current = this.past.pop(); return true; }
     redo() { if (!this.future.length) return false; this.past.push(this.current); this.current = this.future.pop(); return true; }
   }
-  return {W, H, MAX_STROKES, template, clamp, clone, view, fresh, normalize, point, samples, cut, covered, newMotion, advance, interpolate, History};
+  return {W, H, MAX_STROKES, template, clamp, clone, view, fresh, normalize, point, samples, cut, covered, newMotion, styleAt, advance, interpolate, History};
 });

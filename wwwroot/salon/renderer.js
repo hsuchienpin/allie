@@ -53,20 +53,27 @@
       this.paint.clearRect(0, 0, C.W, C.H);
       for (const stroke of state.strokes) for (const p of stroke.points) this.dab(stroke, p[0], p[1]);
     }
-    hair(ctx, strand, length, bend, from = 0) {
-      const points = C.samples(strand, length, bend).filter(p => p.t >= from);
+    hair(ctx, strand, length, bend, from = 0, style) {
+      const points = C.samples(strand, length, bend, style).filter(p => p.t >= from);
       if (points.length < 2) return;
       const first = points[0], last = points[points.length - 1];
       const g = gradient(ctx, first.x - strand.width / 2, 0, first.x + strand.width / 2, 0,
         [[0, '#63433c'], [.35, '#93664e'], [.62, '#ac7d58'], [1, '#705044']]);
+      const normals = points.map((p, i) => {
+        const a = points[Math.max(0, i - 1)], b = points[Math.min(points.length - 1, i + 1)];
+        const dx = b.x - a.x, dy = b.y - a.y, distance = Math.hypot(dx, dy) || 1;
+        return {x: dy / distance, y: -dx / distance};
+      });
       ctx.beginPath();
       for (let i = 0; i < points.length; i++) {
         const p = points[i], taper = .8 + .2 * (1 - i / points.length), half = strand.width * taper / 2;
-        if (i === 0) ctx.moveTo(p.x - half, p.y); else ctx.lineTo(p.x - half, p.y);
+        const n = normals[i];
+        if (i === 0) ctx.moveTo(p.x - n.x * half, p.y - n.y * half); else ctx.lineTo(p.x - n.x * half, p.y - n.y * half);
       }
-      ctx.quadraticCurveTo(last.x, last.y + 7, last.x + strand.width * .4, last.y);
+      const end = normals[normals.length - 1];
+      ctx.quadraticCurveTo(last.x - end.y * 6, last.y + end.x * 6, last.x + end.x * strand.width * .4, last.y + end.y * strand.width * .4);
       for (let i = points.length - 1; i >= 0; i--) {
-        const p = points[i], half = strand.width * (.8 + .2 * (1 - i / points.length)) / 2; ctx.lineTo(p.x + half, p.y);
+        const p = points[i], half = strand.width * (.8 + .2 * (1 - i / points.length)) / 2, n = normals[i]; ctx.lineTo(p.x + n.x * half, p.y + n.y * half);
       }
       ctx.closePath(); ctx.fillStyle = g; ctx.fill();
       ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x - 2, p.y + 2) : ctx.moveTo(p.x - 2, p.y + 2));
@@ -146,19 +153,19 @@
       glow(ctx, 305, 220, 300, '#ffffff80');
       const view = C.view(options.tool); ctx.translate(view.x, view.y); ctx.scale(view.scale, view.scale);
       shape(ctx, new Path2D('M154 299Q132 87 256 77Q405 43 446 213L449 342Q401 395 300 377Q181 392 154 299Z'), gradient(ctx, 155, 180, 445, 230, [[0, '#68453c'], [.3, '#91654b'], [.6, '#ad8058'], [1, '#694a40']]));
-      for (const s of C.template.filter(s => s.layer === 'back')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend);
+      for (const s of C.template.filter(s => s.layer === 'back')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend, 0, state.styles[s.id]);
       this.face(ctx);
       // The base lip color belongs beneath the paint, drawn on the face itself.
       ctx.save(); ctx.clip(paths.lipstick); ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#d5958b'; ctx.fillRect(260, 376, 80, 45); ctx.drawImage(this.makeup, 0, 0); ctx.restore();
       this.details(ctx, options.tool === 'eyeshadow');
-      for (const s of C.template.filter(s => s.layer === 'side')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend);
+      for (const s of C.template.filter(s => s.layer === 'side')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend, 0, state.styles[s.id]);
       // Swept crown roots blend into independently trimmable fringe tips.
       shape(ctx, new Path2D('M160 246Q144 112 245 88Q355 57 414 151Q352 105 285 123Q221 136 195 232L181 269Z'), gradient(ctx, 172, 100, 382, 200, [[0, '#69493d'], [.4, '#a47651'], [.65, '#b28a60'], [1, '#78513e']]));
-      for (const s of C.template.filter(s => s.layer === 'fringe')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend * .35);
+      for (const s of C.template.filter(s => s.layer === 'fringe')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend * .35, 0, state.styles[s.id]);
       line(ctx, 'M172 204Q179 115 264 100M180 217Q192 133 268 111M303 103Q361 83 399 141', '#e1bd8240', 1.5);
       for (const chip of options.chips || []) {
         ctx.save(); ctx.translate(chip.dx, chip.dy); ctx.globalAlpha = Math.max(0, 1 - chip.age / 1.2);
-        this.hair(ctx, chip.strand, chip.to, chip.bend, chip.from); ctx.restore();
+        this.hair(ctx, chip.strand, chip.to, chip.bend, chip.from, chip.style); ctx.restore();
       }
       if (options.pointer) {
         const p = options.pointer;

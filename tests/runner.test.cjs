@@ -85,7 +85,11 @@ test('catalog entries and each game entrypoint exist; studio assets remain avail
   const base = path.resolve(__dirname, '../wwwroot'), catalog = JSON.parse(fs.readFileSync(path.join(base, 'portal/games.json'), 'utf8'));
   for (const id of ['studio', 'runner']) assert.ok(catalog.some(game => game.id === id));
   assert.equal(new Set(catalog.map(x => x.id)).size, catalog.length);
-  for (const game of catalog) assert.ok(fs.existsSync(path.join(base, game.href, 'index.html')));
+  for (const game of catalog) {
+    const target = new URL(game.href, 'https://allie.test/');
+    assert.equal(target.origin, 'https://allie.test');
+    assert.ok(fs.existsSync(path.join(base, decodeURIComponent(target.pathname), 'index.html')));
+  }
   const studio = fs.readFileSync(path.join(base, 'studio/index.html'), 'utf8'); assert.ok(studio.includes('id="layer-bottom"')); assert.ok(studio.includes('返回樂園'));
   const gallery = JSON.parse(fs.readFileSync(path.join(base, 'gallery.json'), 'utf8')); assert.ok(gallery.length > 0);
   for (const card of gallery) assert.ok(fs.existsSync(path.join(base, card.imagePath)), `Missing gallery asset ${card.imagePath}`);

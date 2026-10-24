@@ -5,14 +5,14 @@
   <script src="../shared/screen.js"></script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#faf4eb">
-  <meta name="description" content="Little Salon 美妝沙龍：用手指塗口紅、刷眼影、剪頭髮，再讓頭髮隨著吹風機飄動。">
+  <meta name="description" content="Little Salon 美妝沙龍：塗口紅、畫眼影、剪頭髮，吹直、內彎、外翹與蓬鬆，放開後保留髮型。">
   <title>Little Salon · 美妝沙龍</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../shared/screen.css">
-  <link rel="stylesheet" href="style.css">
-  <script defer src="core.js"></script>
-  <script defer src="renderer.js"></script>
-  <script defer src="app.js"></script>
+  <link rel="stylesheet" href="style.css?v=20261024-styling">
+  <script defer src="core.js?v=20261024-styling"></script>
+  <script defer src="renderer.js?v=20261024-styling"></script>
+  <script defer src="app.js?v=20261024-styling"></script>
 </head>
 <body>
   <div class="salon-shell">
@@ -27,7 +27,7 @@
           <div class="mirror-heading"><span><i></i> HELLO, BEAUTIFUL</span><span class="mirror-flower" aria-hidden="true">✳</span></div>
           <div class="mirror-stage">
             <span class="doodle doodle-one" aria-hidden="true">✧</span><span class="doodle doodle-two" aria-hidden="true">♡</span>
-            <div class="canvas-wrap"><canvas id="portrait" width="1200" height="1440" aria-label="Makeover canvas. Drag on lips or eyelids to paint; use scissors on hair or hold the dryer near hair.">請啟用支援 Canvas 的瀏覽器。</canvas></div>
+            <div class="canvas-wrap"><canvas id="portrait" width="1200" height="1440" aria-label="Makeover canvas. Paint lips and eyelids, cut hair, or choose a dryer style and hold near hair. Release to set the style; Undo restores it.">請啟用支援 Canvas 的瀏覽器。</canvas></div>
             <span class="mirror-note" aria-hidden="true">made with a little love</span>
           </div>
           <div class="mirror-controls"><div class="history"><button id="undo" class="icon-button" aria-label="Undo" title="Undo · 上一步" disabled><span data-icon="undo"></span></button><button id="redo" class="icon-button" aria-label="Redo" title="Redo · 下一步" disabled><span data-icon="redo"></span></button></div><span id="save-status" lang="zh-Hant" role="status">自由玩，慢慢來 ♡</span><button id="reset" class="icon-button" aria-label="Start over" title="Start over · 重新開始"><span data-icon="reset"></span></button></div>
@@ -50,7 +50,19 @@
           </section>
           <section id="hair-options" class="options hair-options" hidden>
             <div id="cut-note" class="hair-note"><span aria-hidden="true">✂</span><p lang="zh-Hant">在兩側長髮或瀏海上滑動剪刀。<br>剪短了也能按上一步！</p></div>
-            <div id="wind-options" hidden><div class="option-label"><label for="wind-power">A little breeze</label><output id="wind-name">Breezy</output></div><input id="wind-power" type="range" min="0.4" max="1.4" value="0.9" step="0.1"><button id="dryer-toggle" class="button dryer-toggle" aria-pressed="false"><span class="power-dot" aria-hidden="true"></span><span id="dryer-label">Turn on · 持續吹風</span></button><p class="wind-note" lang="zh-Hant">按住頭髮旁邊吹，或打開吹風開關。<br>移動吹風機，讓髮束隨風飄。</p></div>
+            <div id="wind-options" hidden>
+              <div class="option-label"><span id="style-label">Style & set</span><span id="style-name" lang="zh-Hant">吹直</span></div>
+              <div class="style-grid" role="group" aria-labelledby="style-label">
+                <button class="style-button" data-style="straight" data-label="吹直" aria-pressed="true"><svg viewBox="0 0 40 34" aria-hidden="true"><path d="M11 4v26M20 4v26M29 4v26"/></svg><span>Straight<small lang="zh-Hant">吹直</small></span></button>
+                <button class="style-button" data-style="inward" data-label="髮尾內彎" aria-pressed="false"><svg viewBox="0 0 40 34" aria-hidden="true"><path d="M9 4v15q0 12 12 10M15 4v14q0 8 7 7M31 4v15q0 12-12 10"/></svg><span>Inward<small lang="zh-Hant">髮尾內彎</small></span></button>
+                <button class="style-button" data-style="outward" data-label="髮尾外翹" aria-pressed="false"><svg viewBox="0 0 40 34" aria-hidden="true"><path d="M15 4v15q0 12-12 10M21 4v14q0 8 10 7M27 4v15q0 12 11 10"/></svg><span>Outward<small lang="zh-Hant">髮尾外翹</small></span></button>
+                <button class="style-button" data-style="volume" data-label="蓬鬆" aria-pressed="false"><svg viewBox="0 0 40 34" aria-hidden="true"><path d="M14 3C-2 13 14 19 6 30M21 3C6 13 21 19 15 30M28 3C41 13 27 19 35 30"/></svg><span>Volume<small lang="zh-Hant">蓬鬆</small></span></button>
+              </div>
+              <p class="wind-note" lang="zh-Hant">在髮束上按住吹，放開就能定型。<br>也可以開啟持續造型，再按 Finish 完成。</p>
+              <div class="option-label"><label for="wind-power">Air power</label><output id="wind-name">Breezy</output></div><input id="wind-power" type="range" min="0.4" max="1.4" value="0.9" step="0.1">
+              <button id="dryer-toggle" class="button dryer-toggle" aria-pressed="false"><span class="power-dot" aria-hidden="true"></span><span id="dryer-label">Turn on · 持續造型</span></button>
+              <button id="reset-style" class="text-button">Reset styling <small lang="zh-Hant">清除造型</small></button>
+            </div>
             <button id="regrow" class="button regrow-button"><span data-icon="spark"></span>Grow hair back <small lang="zh-Hant">恢復長髮</small></button>
           </section>
           <div class="hint-card"><span data-icon="hand" aria-hidden="true"></span><p id="tool-hint" lang="zh-Hant">在嘴唇上慢慢塗。<br>顏色只會留在嘴唇裡。</p></div>

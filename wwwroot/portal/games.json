@@ -3,15 +3,15 @@
     "id": "salon",
     "title": "Little Salon",
     "category": "美妝沙龍",
-    "description": "塗口紅、畫眼影，剪髮吹髮自由玩。",
-    "href": "/salon/",
+    "description": "塗口紅、畫眼影，吹直、內彎、外翹、蓬鬆自由定型。",
+    "href": "/salon/?v=20261024-styling",
     "action": "Play",
     "art": "salon",
     "theme": "rose",
     "tags": [
       "手指化妝",
-      "剪髮與吹髮",
-      "可玩原型"
+      "四種吹髮造型",
+      "定型與復原"
     ]
   },
   {

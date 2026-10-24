@@ -30,20 +30,21 @@
   }
   catch (_) { canSave = false; $('storage-warning').hidden = false; }
   const renderer = new SalonRenderer.Renderer(canvas), history = new C.History(state);
-  let tool = 'lipstick', pointer = null, gesture = null, dryerOn = false, motion = C.newMotion(), chips = [], frame = 0, lastTime = 0, saveTimer = 0;
+  let tool = 'lipstick', pointer = null, gesture = null, dryerOn = false, stylingBefore = null, stylingMode = 'straight', motion = C.newMotion(), chips = [], frame = 0, lastTime = 0, saveTimer = 0;
   const selection = {lipstick: 0, eyeshadow: 0}, sizes = {lipstick: 20, eyeshadow: 32};
   renderer.rebuild(state);
   function status(message) { $('save-status').textContent = message; }
   function saveNow() {
     clearTimeout(saveTimer);
     if (!canSave) return;
-    try { localStorage.setItem(STORAGE, JSON.stringify(state)); status('已保存在這個瀏覽器 ♡'); }
+    try { localStorage.setItem(STORAGE, JSON.stringify(history.current)); status('已保存在這個瀏覽器 ♡'); }
     catch (_) { canSave = false; $('storage-warning').hidden = false; status('可以用 Save photo 下載作品'); }
   }
   function updateHistory() { $('undo').disabled = !history.past.length; $('redo').disabled = !history.future.length; }
   function commit() {
-    if (!history.push(state)) return;
+    if (!history.push(state)) return false;
     updateHistory(); status('好可愛，繼續創作吧 ♡'); clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 450);
+    return true;
   }
   function render(time = performance.now()) {
     renderer.render(state, motion, {tool, pointer, size: sizes[tool], mirror: $('mirror-eyes').checked, chips, time});
@@ -51,7 +52,8 @@
   function tick(time) {
     frame = 0;
     const dt = lastTime ? Math.min((time - lastTime) / 1000, .035) : 1 / 60; lastTime = time;
-    const wind = tool === 'dryer' && (gesture || dryerOn) ? {...pointer, power: Number($('wind-power').value)} : null;
+    const wind = tool === 'dryer' && (gesture || dryerOn) ? {...pointer, power: Number($('wind-power').value), mode: stylingMode} : null;
+    if (wind) C.styleAt(state, motion, wind, dt);
     const moving = C.advance(state, motion, wind, dt);
     chips = chips.filter(p => p.age < 1.2);
     for (const p of chips) { p.age += dt; p.dy += (80 + p.age * 270) * dt; p.dx += p.strand.side * 32 * dt; }
@@ -59,15 +61,24 @@
     if (wind || moving || chips.length) frame = requestAnimationFrame(tick); else lastTime = 0;
   }
   function animate() { if (!frame) frame = requestAnimationFrame(tick); }
-  function stopDryer() {
-    dryerOn = false; $('dryer-toggle').setAttribute('aria-pressed', 'false'); $('dryer-label').textContent = 'Turn on · 持續吹風';
+  function startStyling() {
+    if (!stylingBefore) stylingBefore = C.clone(state);
+    status('慢慢吹整，放開就會保留造型 ♡');
+  }
+  function stopDryer(keep = true) {
+    const before = stylingBefore; stylingBefore = null;
+    dryerOn = false; $('dryer-toggle').setAttribute('aria-pressed', 'false'); $('dryer-label').textContent = 'Turn on · 持續造型';
     if (pointer) pointer.active = !!gesture;
+    if (!before) return;
+    if (!keep) { state = before; renderer.rebuild(state); chips = []; }
+    else if (commit()) status('造型已定型，Undo 可以復原 ♡');
+    else status('把吹風機移近想整理的髮束，再吹一吹');
   }
   function cancel() {
-    stopDryer();
-    if (!gesture) return;
     const old = gesture; gesture = null;
-    if (old.before) { state = old.before; renderer.rebuild(state); chips = []; }
+    stopDryer(!(old && tool === 'dryer'));
+    if (!old) return;
+    if (old.before && tool !== 'dryer') { state = old.before; renderer.rebuild(state); chips = []; }
     if (canvas.hasPointerCapture(old.id)) canvas.releasePointerCapture(old.id);
     pointer = null; animate();
   }
@@ -99,6 +110,7 @@
       if (state.strokes.length >= C.MAX_STROKES) { status('畫得好豐富！先卸妝或下載照片再繼續'); return; }
     }
     gesture = {id: event.pointerId, before: C.clone(state), last: point(event), added: false};
+    if (tool === 'dryer') startStyling();
     if (tool === 'lipstick' || tool === 'eyeshadow') gesture.stroke = {
       tool, color: palettes[tool][selection[tool]][1], size: sizes[tool], mirror: tool === 'eyeshadow' && $('mirror-eyes').checked, points: []
     };
@@ -123,10 +135,12 @@
     for (const p of C.interpolate(gesture.last, end, 3)) applyAt(p);
     const id = gesture.id; gesture = null; pointer = event.pointerType === 'mouse' || dryerOn ? {...end, active: dryerOn} : null;
     if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
-    commit(); animate();
+    if (tool === 'dryer') { if (!dryerOn) stopDryer(); }
+    else commit();
+    animate();
   }
   canvas.addEventListener('pointerup', finish);
-  canvas.addEventListener('pointercancel', cancel);
+  canvas.addEventListener('pointercancel', event => { if (!gesture || event.pointerId === gesture.id) cancel(); });
   canvas.addEventListener('lostpointercapture', () => { if (gesture) cancel(); });
   canvas.addEventListener('pointerleave', () => { if (!gesture && !dryerOn) { pointer = null; render(); } });
   window.addEventListener('blur', cancel);
@@ -143,7 +157,7 @@
       lipstick: '在嘴唇上慢慢塗。<br>顏色只會留在嘴唇裡。',
       eyeshadow: '在眼皮上輕輕刷，疊出喜歡的顏色。<br>勾選 Both eyes，兩邊會一起上色。',
       scissors: '沿著想要的長度，橫向滑過頭髮。<br>瀏海也可以剪短一點點。',
-      dryer: '按住頭髮旁邊，再左右移動。<br>看看哪個方向的風最有趣！'
+      dryer: '選造型，在想整理的髮束上按住。<br>放開會定型，Undo 可以復原。'
     };
     $('tool-hint').innerHTML = hints[next];
     if (painting) {
@@ -162,21 +176,29 @@
   $('mirror-eyes').onchange = () => render();
   $('wind-power').oninput = () => { $('wind-name').value = Number($('wind-power').value) < .8 ? 'Gentle' : Number($('wind-power').value) > 1.1 ? 'Whoosh!' : 'Breezy'; };
   $('dryer-toggle').onclick = () => {
-    dryerOn = !dryerOn;
-    $('dryer-toggle').setAttribute('aria-pressed', String(dryerOn)); $('dryer-label').textContent = dryerOn ? 'Turn off · 關閉吹風' : 'Turn on · 持續吹風';
+    if (dryerOn) stopDryer();
+    else { startStyling(); dryerOn = true; }
+    $('dryer-toggle').setAttribute('aria-pressed', String(dryerOn)); $('dryer-label').textContent = dryerOn ? 'Finish · 完成定型' : 'Turn on · 持續造型';
     if (dryerOn && !pointer) pointer = {x: 100, y: 390, active: true};
     if (pointer) pointer.active = dryerOn; animate();
   };
+  document.querySelectorAll('[data-style]').forEach(button => button.onclick = () => {
+    cancel(); stylingMode = button.dataset.style; pointer = null;
+    document.querySelectorAll('[data-style]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    $('style-name').textContent = button.dataset.label;
+    status('在想整理的髮束上按住吹，放開就會定型'); render();
+  });
   function replace(next) { cancel(); state = next; motion = C.newMotion(); chips = []; pointer = null; renderer.rebuild(state); commit(); render(); }
-  $('undo').onclick = () => { cancel(); if (history.undo()) { state = C.clone(history.current); renderer.rebuild(state); chips = []; updateHistory(); saveNow(); render(); } };
-  $('redo').onclick = () => { cancel(); if (history.redo()) { state = C.clone(history.current); renderer.rebuild(state); chips = []; updateHistory(); saveNow(); render(); } };
+  $('undo').onclick = () => { cancel(); if (history.undo()) { state = C.clone(history.current); renderer.rebuild(state); motion = C.newMotion(); chips = []; pointer = null; updateHistory(); saveNow(); render(); } };
+  $('redo').onclick = () => { cancel(); if (history.redo()) { state = C.clone(history.current); renderer.rebuild(state); motion = C.newMotion(); chips = []; pointer = null; updateHistory(); saveNow(); render(); } };
   $('wash').onclick = () => replace({...C.clone(state), strokes: []});
-  $('regrow').onclick = () => replace({...C.clone(state), lengths: C.fresh().lengths});
+  $('regrow').onclick = () => replace({...C.clone(state), lengths: C.fresh().lengths, styles: C.fresh().styles});
+  $('reset-style').onclick = () => replace({...C.clone(state), styles: C.fresh().styles});
   $('reset').onclick = () => { replace(C.fresh()); status('全新的一天！上一步仍能回到剛才的造型'); };
   $('photo').onclick = () => {
     cancel();
     const photo = document.createElement('canvas'); photo.width = 1200; photo.height = 1440;
-    const art = new SalonRenderer.Renderer(photo); art.rebuild(state); art.render(state, motion, {tool: 'photo'});
+    const art = new SalonRenderer.Renderer(photo); art.rebuild(state); art.render(state, C.newMotion(), {tool: 'photo'});
     try {
       // A self-contained image also supports saving from tablet browsers and embedded previews.
       const photoUrl = photo.toDataURL('image/png'); $('photo-preview').src = photoUrl; $('download-photo').href = photoUrl;
