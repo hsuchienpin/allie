@@ -1,5 +1,35 @@
 [
   {
+    "id": "salon",
+    "title": "Little Salon",
+    "category": "美妝沙龍",
+    "description": "塗口紅、畫眼影，剪髮吹髮自由玩。",
+    "href": "/salon/",
+    "action": "Play",
+    "art": "salon",
+    "theme": "rose",
+    "tags": [
+      "手指化妝",
+      "剪髮與吹髮",
+      "可玩原型"
+    ]
+  },
+  {
+    "id": "doll",
+    "title": "Paper Dolls",
+    "category": "紙娃娃工坊",
+    "description": "選材料、換穿搭，打造自己的紙娃娃。",
+    "href": "/doll/",
+    "action": "Play",
+    "art": "doll",
+    "theme": "green",
+    "tags": [
+      "14 個訂製分類",
+      "角色取名與收藏",
+      "紙張質感"
+    ]
+  },
+  {
     "id": "studio",
     "title": "Draw",
     "category": "創意小天地",
@@ -65,7 +95,10 @@
     "action": "Play",
     "art": "piano",
     "theme": "lavender",
-    "tags": ["8 個大白鍵", "10 首熟悉旋律"]
+    "tags": [
+      "8 個大白鍵",
+      "10 首熟悉旋律"
+    ]
   },
   {
     "id": "drums",
@@ -76,6 +109,10 @@
     "action": "Play",
     "art": "drums",
     "theme": "rose",
-    "tags": ["左右雙鼓", "10 首經典旋律", "直式也能玩"]
+    "tags": [
+      "左右雙鼓",
+      "10 首經典旋律",
+      "直式也能玩"
+    ]
   }
 ]
