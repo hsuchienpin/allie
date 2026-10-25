@@ -1,52 +1,64 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <script src="../shared/screen.js"></script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#faf4eb">
-  <meta name="description" content="Little Salon 美妝沙龍：塗口紅、畫眼影、剪頭髮，吹直、內彎、外翹與蓬鬆，放開後保留髮型。">
-  <title>Little Salon · 美妝沙龍</title>
+  <meta name="theme-color" content="#faf3f7">
+  <meta name="description" content="Little Salon 公主美妝沙龍：畫眼線、眼影、腮紅與口紅，搭配皇冠、髮飾、耳環與項鍊，自由剪髮與吹整造型。">
+  <title>Little Salon · 公主美妝沙龍</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../shared/screen.css">
-  <link rel="stylesheet" href="style.css?v=20261024-styling">
-  <script defer src="core.js?v=20261024-styling"></script>
-  <script defer src="renderer.js?v=20261024-styling"></script>
-  <script defer src="app.js?v=20261024-styling"></script>
+  <link rel="stylesheet" href="style.css?v=20261025-princess">
+  <script defer src="core.js?v=20261025-princess"></script>
+  <script defer src="art.js?v=20261025-princess"></script>
+  <script defer src="renderer.js?v=20261025-princess"></script>
+  <script defer src="app.js?v=20261025-princess"></script>
 </head>
 <body>
   <div class="salon-shell">
     <header class="salon-header">
-      <div class="brand"><span class="brand-flower" aria-hidden="true">✿</span><div><h1>Little Salon<span>.</span></h1><p>A LITTLE BRUSH OF MAGIC</p></div></div>
-      <button id="photo" class="button photo-button"><span data-icon="camera"></span><span>Save photo</span></button>
+      <div class="brand"><span class="brand-flower" data-icon="accessories"></span><div><h1>Little Salon<span>.</span></h1><p>THE PRINCESS COLLECTION</p></div></div>
+      <button id="photo" class="button photo-button"><span data-icon="camera"></span><span>儲存照片 <small>Save photo</small></span></button>
     </header>
     <main>
-      <div class="intro"><div><h2>Your very own beauty day.</h2><p lang="zh-Hant">一點顏色，一點微風，今天的造型由你決定。</p></div><span class="prototype">PLAY & EXPLORE <span aria-hidden="true">✧</span></span></div>
+      <div class="intro"><div><h2>A little royal magic.</h2><p>公主的梳妝時光，讓想像閃閃發亮。</p></div><span class="prototype">YOUR STORY, YOUR STYLE <span aria-hidden="true">✧</span></span></div>
       <div class="workbench">
         <section class="mirror-panel" aria-label="Salon mirror">
-          <div class="mirror-heading"><span><i></i> HELLO, BEAUTIFUL</span><span class="mirror-flower" aria-hidden="true">✳</span></div>
+          <div class="mirror-heading"><span><i></i> THE MAGIC MIRROR</span><span class="mirror-flower" aria-hidden="true">✧</span></div>
           <div class="mirror-stage">
             <span class="doodle doodle-one" aria-hidden="true">✧</span><span class="doodle doodle-two" aria-hidden="true">♡</span>
-            <div class="canvas-wrap"><canvas id="portrait" width="1200" height="1440" aria-label="Makeover canvas. Paint lips and eyelids, cut hair, or choose a dryer style and hold near hair. Release to set the style; Undo restores it.">請啟用支援 Canvas 的瀏覽器。</canvas></div>
-            <span class="mirror-note" aria-hidden="true">made with a little love</span>
+            <div class="canvas-wrap"><canvas id="portrait" width="1200" height="1440" aria-label="公主梳妝鏡：在嘴唇、眼皮、眼線或兩頰上畫畫，也能剪髮和吹整。放開定型，上一步可復原。">請啟用支援 Canvas 的瀏覽器。</canvas></div>
+            <span class="mirror-note" aria-hidden="true">a story only you can tell</span>
           </div>
           <div class="mirror-controls"><div class="history"><button id="undo" class="icon-button" aria-label="Undo" title="Undo · 上一步" disabled><span data-icon="undo"></span></button><button id="redo" class="icon-button" aria-label="Redo" title="Redo · 下一步" disabled><span data-icon="redo"></span></button></div><span id="save-status" lang="zh-Hant" role="status">自由玩，慢慢來 ♡</span><button id="reset" class="icon-button" aria-label="Start over" title="Start over · 重新開始"><span data-icon="reset"></span></button></div>
         </section>
         <aside class="vanity" aria-label="Salon tools">
-          <div class="vanity-heading"><span class="eyebrow">YOUR LITTLE VANITY</span><h2>Let's make magic.</h2><p lang="zh-Hant">選一個工具，就可以開始囉。</p></div>
+          <div class="vanity-heading"><span class="eyebrow">THE ROYAL VANITY</span><h2>公主的梳妝盒</h2><p>選一個工具，開始今天的魔法。</p></div>
           <nav class="tool-grid" aria-label="Choose a tool">
             <button class="tool selected" data-tool="lipstick" aria-pressed="true"><span class="tool-picture lipstick-picture" data-icon="lipstick"></span><strong>Lipstick</strong><small lang="zh-Hant">塗口紅</small></button>
             <button class="tool" data-tool="eyeshadow" aria-pressed="false"><span class="tool-picture shadow-picture" data-icon="eyeshadow"></span><strong>Eyeshadow</strong><small lang="zh-Hant">畫眼影</small></button>
+            <button class="tool" data-tool="eyeliner" aria-pressed="false"><span class="tool-picture" data-icon="eyeliner"></span><strong>Eyeliner</strong><small>畫眼線</small></button>
+            <button class="tool" data-tool="blush" aria-pressed="false"><span class="tool-picture" data-icon="blush"></span><strong>Blush</strong><small>畫腮紅</small></button>
             <button class="tool" data-tool="scissors" aria-pressed="false"><span class="tool-picture scissors-picture" data-icon="scissors"></span><strong>Scissors</strong><small lang="zh-Hant">剪頭髮</small></button>
             <button class="tool" data-tool="dryer" aria-pressed="false"><span class="tool-picture dryer-picture" data-icon="dryer"></span><strong>Hair dryer</strong><small lang="zh-Hant">吹頭髮</small></button>
+            <button class="tool accessory-tool" data-tool="accessories" aria-pressed="false"><span class="tool-picture" data-icon="accessories"></span><strong>Jewelry</strong><small>戴飾品</small></button>
           </nav>
           <section id="paint-options" class="options" aria-label="Makeup colors">
-            <div class="option-label"><label id="color-label">A little color</label><span id="color-name">Rose</span></div>
+            <div class="option-label"><label id="color-label">選一個顏色</label><span id="color-name">Rose</span></div>
             <div id="colors" class="swatches" role="group" aria-labelledby="color-label"></div>
             <div class="size-row"><label for="brush-size">Brush size <small lang="zh-Hant">筆刷大小</small></label><output id="size-value" for="brush-size">20</output></div>
             <input id="brush-size" type="range" min="8" max="44" value="20" step="2">
-            <label id="mirror-option" class="check-label" hidden><input id="mirror-eyes" type="checkbox" checked><span>Both eyes <small lang="zh-Hant">左右一起畫</small></span></label>
+            <label id="mirror-option" class="check-label" hidden><input id="mirror-eyes" type="checkbox" checked><span id="mirror-caption">兩眼一起畫</span><small>Mirror</small></label>
             <button id="wash" class="text-button"><span data-icon="droplet"></span>Remove makeup <small lang="zh-Hant">卸妝</small></button>
+          </section>
+          <section id="accessory-options" class="options" hidden aria-label="公主飾品">
+            <div class="option-label"><span>搭配小飾品</span><span id="accessory-name">水晶皇冠</span></div>
+            <div class="accessory-tabs" role="group" aria-label="飾品種類">
+              <button data-slot="head" aria-pressed="true">皇冠</button><button data-slot="clip" aria-pressed="false">髮飾</button><button data-slot="ears" aria-pressed="false">耳環</button><button data-slot="neck" aria-pressed="false">項鍊</button>
+            </div>
+            <div id="accessory-choices" class="accessory-grid" role="group" aria-label="選擇飾品"></div>
+            <button id="remove-accessories" class="text-button">取下所有飾品 <small>Remove all</small></button>
           </section>
           <section id="hair-options" class="options hair-options" hidden>
             <div id="cut-note" class="hair-note"><span aria-hidden="true">✂</span><p lang="zh-Hant">在兩側長髮或瀏海上滑動剪刀。<br>剪短了也能按上一步！</p></div>
@@ -73,8 +85,8 @@
     </main>
   </div>
   <dialog id="photo-dialog" class="photo-dialog" aria-labelledby="photo-title">
-    <p class="eyebrow">MADE BY YOU</p><h2 id="photo-title">A little masterpiece.</h2><p class="photo-description" lang="zh-Hant">把今天的造型，留成一張照片。</p>
-    <img id="photo-preview" width="600" height="720" alt="Your finished salon portrait">
+    <p class="eyebrow">A PORTRAIT OF YOUR IMAGINATION</p><h2 id="photo-title">我的公主造型</h2><p class="photo-description">把今天的魔法，留成一張照片。</p>
+    <img id="photo-preview" width="600" height="720" alt="完成的公主妝容、髮型與飾品">
     <div class="photo-actions"><button id="photo-close" class="button">Keep playing</button><a id="download-photo" class="button photo-button" download="Allie-Little-Salon.png">Download PNG ↗</a></div>
     <p class="photo-description" lang="zh-Hant">如果瀏覽器沒有下載，可以長按照片儲存。</p>
   </dialog>

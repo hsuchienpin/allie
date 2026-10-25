@@ -65,7 +65,7 @@ test('fast drags have intermediate samples and makeup view maps both ends correc
 test('old progress migrates to fixed styles without losing makeup or haircut',()=>{
   const old={version:1,lengths:C.template.map(()=>.7),strokes:[{tool:'lipstick',color:'#bd5d78',size:20,mirror:false,points:[[300,395]]}]};
   const next=C.normalize(old);
-  assert.equal(next.version,2);assert.deepEqual(next.lengths,old.lengths);assert.deepEqual(next.strokes,old.strokes);
+  assert.equal(next.version,3);assert.deepEqual(next.lengths,old.lengths);assert.deepEqual(next.strokes,old.strokes);
   assert.ok(next.styles.every(s=>s.curl===0&&s.volume===0&&s.straight===0));
   next.styles[0].curl=1;assert.equal(next.styles[1].curl,0);
   const safe=C.normalize({version:2,styles:[{straight:99,curl:-8,volume:NaN,extent:Infinity}]});
@@ -117,4 +117,19 @@ test('styling rate is stable across frame rates and invalid modes do not mutate 
   const saved=JSON.stringify(a);
   for(const invalid of [{mode:'unknown',x:150,y:400},{mode:'__proto__',x:150,y:400},{mode:'straight',x:NaN,y:400}])C.styleAt(a,m,invalid,1);
   C.styleAt(a,m,wind,NaN);assert.equal(JSON.stringify(a),saved);
+});
+
+
+test('v2 saved styles and makeup migrate intact with default princess accessories',()=>{
+  const old=C.fresh();old.version=2;delete old.accessories;old.styles[3].curl=.7;old.lengths[4]=.5;
+  old.strokes=[{tool:'eyeshadow',color:'#ad83ba',size:32,mirror:true,points:[[240,270]]}];
+  const result=C.normalize(old);assert.equal(result.version,3);assert.deepEqual(result.styles,old.styles);assert.deepEqual(result.lengths,old.lengths);assert.deepEqual(result.strokes,old.strokes);assert.equal(result.accessories.head,'tiara');
+});
+test('saved new makeup and accessories are bounded by tool and slot',()=>{
+  const s=C.normalize({version:3,accessories:{head:'royal',clip:'__proto__',ears:'bow',neck:'moon',extra:'bad'},strokes:[
+    {tool:'eyeliner',color:'#443449',size:200,mirror:true,points:[[215,295]]},
+    {tool:'blush',color:'#e0809b',size:0.5,mirror:true,points:[[240,350]]}]});
+  assert.deepEqual(s.accessories,{head:'royal',clip:'none',ears:'none',neck:'moon'});
+  assert.equal(s.strokes[0].size,14);assert.equal(s.strokes[1].size,20);assert.ok(s.strokes.every(s=>s.mirror));
+  assert.deepEqual(C.normalize(JSON.parse(JSON.stringify(s))),s);
 });

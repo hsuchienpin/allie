@@ -7,25 +7,34 @@
   const W = 600, H = 720, MAX_STROKES = 180;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const clone = value => JSON.parse(JSON.stringify(value));
-  const view = tool => ['lipstick', 'eyeshadow'].includes(tool) ? {scale: 1.5, x: -150, y: -105} : {scale: 1, x: 0, y: 0};
+  const paintTools = ['lipstick', 'eyeshadow', 'eyeliner', 'blush'];
+  const isPaint = tool => paintTools.includes(tool);
+  const brushRange = tool => tool === 'eyeliner' ? [2, 14] : tool === 'blush' ? [20, 70] : [8, 50];
+  const accessories = {
+    head: [['none', '不戴皇冠'], ['tiara', '水晶皇冠'], ['royal', '玫瑰王冠'], ['flowers', '花朵花環']],
+    clip: [['none', '不戴髮飾'], ['bow', '緞帶蝴蝶結'], ['butterfly', '寶石蝴蝶'], ['rose', '玫瑰髮夾']],
+    ears: [['none', '不戴耳環'], ['pearls', '珍珠耳環'], ['stars', '星星耳環'], ['hearts', '愛心耳環']],
+    neck: [['none', '不戴項鍊'], ['pearl', '珍珠項鍊'], ['ruby', '玫瑰寶石'], ['moon', '月光項鍊']]
+  };
+  const view = tool => isPaint(tool) ? {scale: 1.5, x: -150, y: -105} : {scale: 1, x: 0, y: 0};
   function hair() {
     const strands = [];
     // Behind the face and neck. Every hanging ribbon has its own cut length.
     for (let i = 0; i < 34; i++) {
       const x = 169 + i * 7.95, side = x < 300 ? -1 : 1;
       strands.push({id: strands.length, layer: 'back', x, y: 189 - Math.sin(i / 33 * Math.PI) * 65,
-        full: 410 + Math.sin(i * 1.7) * 24, width: 19, side, phase: i * .63, length: 1});
+        full: 408 + Math.sin(i / 33 * Math.PI) * 38, width: 19, side, phase: side < 0 ? .3 : .7, length: 1});
     }
     for (const side of [-1, 1]) for (let i = 0; i < 8; i++) {
       strands.push({id: strands.length, layer: 'side', x: side < 0 ? 174 + i * 5 : 426 - i * 5,
-        y: 167 + i * 5, full: 415 - i * 4 + Math.sin(i) * 12, width: 18,
-        side, phase: i * .7, length: 1});
+        y: 167 + i * 5, full: 440 - i * 7, width: 18,
+        side, phase: side < 0 ? .3 : .7, length: 1});
     }
     for (let i = 0; i < 18; i++) {
       const x = 211 + i * 10.5;
       strands.push({id: strands.length, layer: 'fringe', x, y: 126 - Math.sin(i / 17 * Math.PI) * 28,
-        full: 60 + Math.sin(i / 17 * Math.PI) * 28, width: 18,
-        side: i < 5 ? -1 : 1, phase: i * .4, length: 1});
+        full: 58 + i * 2.3, width: 18,
+        side: 1, phase: .4, length: 1});
     }
     return strands;
   }
@@ -37,24 +46,29 @@
     outward: {straight: .35, curl: 1, volume: 0},
     volume: {straight: 0, curl: 0, volume: 1}
   };
-  function fresh() { return {version: 2, lengths: template.map(() => 1), styles: template.map(naturalStyle), strokes: []}; }
+  function fresh() { return {version: 3, lengths: template.map(() => 1), styles: template.map(naturalStyle), strokes: [], accessories: {head: 'tiara', clip: 'none', ears: 'none', neck: 'none'}}; }
   function normalize(value) {
     const result = fresh();
-    if (!value || ![1, 2].includes(value.version)) return result;
+    if (!value || ![1, 2, 3].includes(value.version)) return result;
     if (Array.isArray(value.lengths)) result.lengths = template.map((_, i) =>
       Number.isFinite(value.lengths[i]) ? clamp(value.lengths[i], .16, 1) : 1);
-    if (value.version === 2 && Array.isArray(value.styles)) result.styles = template.map((_, i) => {
+    if (value.version >= 2 && Array.isArray(value.styles)) result.styles = template.map((_, i) => {
       const s = value.styles[i];
       if (!s || typeof s !== 'object') return naturalStyle();
       const safe = (key, low, high, fallback = 0) => Number.isFinite(s[key]) ? clamp(s[key], low, high) : fallback;
       return {straight: safe('straight', 0, 1), curl: safe('curl', -1, 1), volume: safe('volume', 0, 1), extent: safe('extent', .16, 1, 1)};
     });
     if (Array.isArray(value.strokes)) result.strokes = value.strokes.slice(-MAX_STROKES).flatMap(s => {
-      if (!s || !['lipstick', 'eyeshadow'].includes(s.tool) || !/^#[a-f0-9]{6}$/i.test(s.color) || !Array.isArray(s.points)) return [];
+      if (!s || !isPaint(s.tool) || !/^#[a-f0-9]{6}$/i.test(s.color) || !Array.isArray(s.points)) return [];
       const points = s.points.slice(0, 2500).filter(p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
         .map(p => [clamp(p[0], -80, W + 80), clamp(p[1], -80, H + 80)]);
-      return points.length ? [{tool: s.tool, color: s.color, size: clamp(Number(s.size) || 20, 8, 50), mirror: s.tool === 'eyeshadow' && !!s.mirror, points}] : [];
+      return points.length ? [{tool: s.tool, color: s.color, size: clamp(Number(s.size) || 20, ...brushRange(s.tool)), mirror: s.tool !== 'lipstick' && !!s.mirror, points}] : [];
     });
+    if (value.version === 3 && value.accessories && typeof value.accessories === 'object') {
+      for (const [slot, items] of Object.entries(accessories)) {
+        if (items.some(([id]) => id === value.accessories[slot])) result.accessories[slot] = value.accessories[slot];
+      }
+    }
     return result;
   }
   function point(strand, t, bend = 0, style) {
@@ -163,5 +177,5 @@
     undo() { if (!this.past.length) return false; this.future.push(this.current); this.current = this.past.pop(); return true; }
     redo() { if (!this.future.length) return false; this.past.push(this.current); this.current = this.future.pop(); return true; }
   }
-  return {W, H, MAX_STROKES, template, clamp, clone, view, fresh, normalize, point, samples, cut, covered, newMotion, styleAt, advance, interpolate, History};
+  return {W, H, MAX_STROKES, template, clamp, clone, view, isPaint, brushRange, accessories, fresh, normalize, point, samples, cut, covered, newMotion, styleAt, advance, interpolate, History};
 });
