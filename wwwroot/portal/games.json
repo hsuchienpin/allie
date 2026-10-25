@@ -16,10 +16,10 @@
   },
   {
     "id": "doll",
-    "title": "Paper Dolls",
+    "title": "紙娃娃",
     "category": "紙娃娃工坊",
-    "description": "選材料、換穿搭，打造自己的紙娃娃。",
-    "href": "/doll/",
+    "description": "可愛圓臉、繪本穿搭，打造自己的紙娃娃。",
+    "href": "/doll/?v=20261025-cute-doll",
     "action": "Play",
     "art": "doll",
     "theme": "green",

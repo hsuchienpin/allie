@@ -56,7 +56,10 @@ test('all 160 material selections produce valid self-contained vector output',()
 test('all height and body combinations render with both separate and full outfits',()=>{
   for(let height=0;height<5;height++)for(let body=0;body<4;body++)for(let outfit=0;outfit<17;outfit++){
     const svg=R.draw({...C.defaults,height,body,outfit});
-    assert.ok(!/undefined|NaN|Infinity/.test(svg));assert.match(svg,/<g transform="translate\(180 610\)/);
+    assert.ok(!/undefined|NaN|Infinity/.test(svg));
+    const ids=new Set([...svg.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
+    for(const ref of svg.matchAll(/url\(#([^)]*)\)/g))assert.ok(ids.has(ref[1]),'missing SVG definition '+ref[1]);
+    assert.match(svg,/viewBox="0 -35 360 680"/);
   }
 });
 test('random characters always use valid catalog indices',()=>{

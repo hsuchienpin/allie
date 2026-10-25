@@ -40,7 +40,7 @@
     const key=focusKey(),c=history.current,options=C.items[part];
     $('option-count').textContent=options.length+' 款';
     $('options').innerHTML=options.map(option=>{
-      let art=part==='skin'?`<span class="skin-sample" style="--skin:${C.skinColors[option.id]}"></span>`:part==='gender'?`<span class="gender-art">${R.icon('person')}<span class="gender-symbol">${['♂','♀','✧'][option.id]}</span></span>`:R.thumbnail(c,part,option.id);
+      let art=R.thumbnail(c,part,option.id);
       return `<button type="button" class="option-tile" data-option="${option.id}" data-focus-key="option-${option.id}" aria-label="${escapeText(option.label)}" aria-pressed="${c[part]===option.id}"><span class="selected-badge" aria-hidden="true">✓</span><span class="option-art" aria-hidden="true">${art}</span><span class="option-label">${escapeText(option.label)}</span></button>`;
     }).join('');
     const palette=currentPalette();
