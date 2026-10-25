@@ -5,15 +5,16 @@
   <script src="../shared/screen.js"></script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#faf3f7">
-  <meta name="description" content="Little Salon 公主美妝沙龍：畫眼線、眼影、腮紅與口紅，搭配皇冠、髮飾、耳環與項鍊，自由剪髮與吹整造型。">
+  <meta name="description" content="Little Salon 公主美妝沙龍：畫眼線、眼影、腮紅與口紅，搭配皇冠、髮飾、耳環與項鍊，自由剪髮、染髮與吹整造型。">
   <title>Little Salon · 公主美妝沙龍</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../shared/screen.css">
-  <link rel="stylesheet" href="style.css?v=20261025-princess">
-  <script defer src="core.js?v=20261025-princess"></script>
-  <script defer src="art.js?v=20261025-princess"></script>
-  <script defer src="renderer.js?v=20261025-princess"></script>
-  <script defer src="app.js?v=20261025-princess"></script>
+  <link rel="stylesheet" href="style.css?v=20261025-round-dye">
+  <script defer src="core.js?v=20261025-round-dye"></script>
+  <script defer src="art.js?v=20261025-round-dye"></script>
+  <script defer src="hair.js?v=20261025-round-dye"></script>
+  <script defer src="renderer.js?v=20261025-round-dye"></script>
+  <script defer src="app.js?v=20261025-round-dye"></script>
 </head>
 <body>
   <div class="salon-shell">
@@ -28,7 +29,7 @@
           <div class="mirror-heading"><span><i></i> THE MAGIC MIRROR</span><span class="mirror-flower" aria-hidden="true">✧</span></div>
           <div class="mirror-stage">
             <span class="doodle doodle-one" aria-hidden="true">✧</span><span class="doodle doodle-two" aria-hidden="true">♡</span>
-            <div class="canvas-wrap"><canvas id="portrait" width="1200" height="1440" aria-label="公主梳妝鏡：在嘴唇、眼皮、眼線或兩頰上畫畫，也能剪髮和吹整。放開定型，上一步可復原。">請啟用支援 Canvas 的瀏覽器。</canvas></div>
+            <div class="canvas-wrap"><div id="asset-status" class="asset-status" role="status"><span id="asset-message">正在準備公主的梳妝鏡…</span><button id="asset-retry" class="button" hidden>重新載入</button></div><canvas id="portrait" width="1200" height="1440" aria-label="公主梳妝鏡：在嘴唇、眼皮、眼線或兩頰上畫畫，也能剪髮、染髮和吹整。放開定型，上一步可復原。">請啟用支援 Canvas 的瀏覽器。</canvas></div>
             <span class="mirror-note" aria-hidden="true">a story only you can tell</span>
           </div>
           <div class="mirror-controls"><div class="history"><button id="undo" class="icon-button" aria-label="Undo" title="Undo · 上一步" disabled><span data-icon="undo"></span></button><button id="redo" class="icon-button" aria-label="Redo" title="Redo · 下一步" disabled><span data-icon="redo"></span></button></div><span id="save-status" lang="zh-Hant" role="status">自由玩，慢慢來 ♡</span><button id="reset" class="icon-button" aria-label="Start over" title="Start over · 重新開始"><span data-icon="reset"></span></button></div>
@@ -42,6 +43,7 @@
             <button class="tool" data-tool="blush" aria-pressed="false"><span class="tool-picture" data-icon="blush"></span><strong>Blush</strong><small>畫腮紅</small></button>
             <button class="tool" data-tool="scissors" aria-pressed="false"><span class="tool-picture scissors-picture" data-icon="scissors"></span><strong>Scissors</strong><small lang="zh-Hant">剪頭髮</small></button>
             <button class="tool" data-tool="dryer" aria-pressed="false"><span class="tool-picture dryer-picture" data-icon="dryer"></span><strong>Hair dryer</strong><small lang="zh-Hant">吹頭髮</small></button>
+            <button class="tool" data-tool="dye" aria-pressed="false"><span class="tool-picture" data-icon="dye"></span><strong>Hair color</strong><small>染頭髮</small></button>
             <button class="tool accessory-tool" data-tool="accessories" aria-pressed="false"><span class="tool-picture" data-icon="accessories"></span><strong>Jewelry</strong><small>戴飾品</small></button>
           </nav>
           <section id="paint-options" class="options" aria-label="Makeup colors">
@@ -51,6 +53,11 @@
             <input id="brush-size" type="range" min="8" max="44" value="20" step="2">
             <label id="mirror-option" class="check-label" hidden><input id="mirror-eyes" type="checkbox" checked><span id="mirror-caption">兩眼一起畫</span><small>Mirror</small></label>
             <button id="wash" class="text-button"><span data-icon="droplet"></span>Remove makeup <small lang="zh-Hant">卸妝</small></button>
+          </section>
+          <section id="dye-options" class="options" hidden aria-label="染髮顏色">
+            <div class="option-label"><span>選一個髮色</span><span id="hair-color-name">原本金髮</span></div>
+            <div id="hair-colors" class="dye-grid" role="group" aria-label="選擇髮色"></div>
+            <button id="restore-color" class="text-button">恢復原本金髮 <small>Original color</small></button>
           </section>
           <section id="accessory-options" class="options" hidden aria-label="公主飾品">
             <div class="option-label"><span>搭配小飾品</span><span id="accessory-name">水晶皇冠</span></div>

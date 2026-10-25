@@ -16,6 +16,7 @@
     dryer:'<g stroke="none" transform="rotate(-16 12 12)"><path d="M11 13l3 9q4 2 5-1l-3-10" fill="#c9a5d6"/><path d="M9 2C-3 2-3 14 9 14l11-3V5Z" fill="#b895ce"/><rect x="19" y="4" width="4" height="8" rx="1" fill="#d7b678"/><path d="M4 5v6M7 5v6" stroke="#f6e9f8" stroke-width=".8"/></g>',
     eyeliner:'<g transform="rotate(35 12 12)" stroke="none"><path d="M10 6L12 0L14 6Z" fill="#594463"/><rect x="9.5" y="6" width="5" height="16" rx="1" fill="#a280b4"/><path d="M9.5 10h5" stroke="#e4c17e" stroke-width="2"/><path d="M11 13v6" stroke="#e7cdec"/></g>',
     blush:'<g stroke="none"><ellipse cx="9" cy="18" rx="8" ry="5" fill="#d8b478"/><ellipse cx="9" cy="17" rx="6" ry="3.4" fill="#e89eb7"/><g transform="rotate(20 17 10)"><rect x="15" y="8" width="4" height="15" rx="2" fill="#a981b4"/><rect x="14" y="7" width="6" height="5" rx="1" fill="#e5c180"/><path d="M14 8C4-3 28-3 20 8Z" fill="#dfa0bb"/><path d="M12 4q5-5 10 0" stroke="#f6cadd"/></g></g>',
+    dye:'<path d="M7 10h10l2 12H5ZM9 3h6v7H9Z" fill="#c6a1d6"/><path d="M9 15h6M12 12v6" stroke="#fff6ef"/><path d="M8 3h8" stroke="#d7b678" stroke-width="3"/>',
     accessories:'<path d="M3 18L1 6l6 5 5-9 5 9 6-5-2 12Q12 22 3 18Z" fill="#f0d493" stroke="#c39954"/><path d="M12 8l3 5-3 4-3-4Z" fill="#bc8aca" stroke="#a278ad"/><path d="M5 17q7 3 14 0" stroke="#fff5d6"/>'
   };
   document.querySelectorAll('[data-icon]').forEach(el => {
@@ -37,7 +38,14 @@
   const renderer = new SalonRenderer.Renderer(canvas), history = new C.History(state);
   let tool = 'accessories', pointer = null, gesture = null, dryerOn = false, stylingBefore = null, stylingMode = 'straight', motion = C.newMotion(), chips = [], frame = 0, lastTime = 0, saveTimer = 0;
   const selection = {lipstick: 0, eyeshadow: 0, eyeliner: 0, blush: 0}, sizes = {lipstick: 20, eyeshadow: 32, eyeliner: 8, blush: 48};
-  let accessorySlot = 'head';
+  let accessorySlot = 'head', assetsReady = !window.SalonHair;
+  if (window.SalonHair) {
+    $('asset-status').hidden = false; $('photo').disabled = true;
+    SalonHair.ready.then(() => { assetsReady = true; $('asset-status').hidden = true; $('photo').disabled = false; render(); }).catch(() => {
+      $('asset-message').textContent = '公主圖片尚未載入，請檢查連線後重試。'; $('asset-retry').hidden = false;
+    });
+    $('asset-retry').onclick = () => location.reload();
+  }
   renderer.rebuild(state);
   function status(message) { $('save-status').textContent = message; }
   function saveNow() {
@@ -46,7 +54,7 @@
     try { localStorage.setItem(STORAGE, JSON.stringify(history.current)); status('已保存在這個瀏覽器 ♡'); }
     catch (_) { canSave = false; $('storage-warning').hidden = false; status('可以用 Save photo 下載作品'); }
   }
-  function updateHistory() { $('undo').disabled = !history.past.length; $('redo').disabled = !history.future.length; syncAccessories(); }
+  function updateHistory() { $('undo').disabled = !history.past.length; $('redo').disabled = !history.future.length; syncAccessories(); syncDye(); }
   function commit() {
     if (!history.push(state)) return false;
     updateHistory(); status('好可愛，繼續創作吧 ♡'); clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 450);
@@ -110,7 +118,7 @@
     }
   }
   canvas.addEventListener('pointerdown', event => {
-    if (gesture || event.button !== 0 || tool === 'accessories') return;
+    if (!assetsReady || gesture || event.button !== 0 || ['accessories','dye'].includes(tool)) return;
     event.preventDefault();
     if (C.isPaint(tool)) {
       if (state.strokes.length >= C.MAX_STROKES) { status('畫得好豐富！先卸妝或下載照片再繼續'); return; }
@@ -123,7 +131,7 @@
     canvas.setPointerCapture(event.pointerId); pointer = {...point(event), active: true}; applyAt(pointer); animate();
   });
   canvas.addEventListener('pointermove', event => {
-    if (tool === 'accessories') return;
+    if (!assetsReady || ['accessories','dye'].includes(tool)) return;
     if (gesture && event.pointerId !== gesture.id) return;
     if (!gesture && event.pointerType !== 'mouse') return;
     pointer = point(event);
@@ -160,16 +168,18 @@
     const painting = C.isPaint(next);
     $('paint-options').hidden = !painting; $('hair-options').hidden = !['scissors','dryer'].includes(next);
     $('accessory-options').hidden = next !== 'accessories';
+    $('dye-options').hidden = next !== 'dye';
     $('mirror-option').hidden = !painting || next === 'lipstick'; $('cut-note').hidden = next !== 'scissors'; $('wind-options').hidden = next !== 'dryer';
     $('mirror-caption').textContent = next === 'blush' ? '兩頰一起畫' : '兩眼一起畫';
     const hints = {
-    lipstick:'<g stroke="none" transform="rotate(24 12 12)"><path d="M9 11V4Q9 0 15 1V11Z" fill="#ce7b9b"/><path d="M9 4l6-2v2l-6 3" fill="#efa9bd"/><rect x="7.5" y="10" width="9" height="5" rx="1" fill="#e3c282"/><rect x="7" y="14" width="10" height="9" rx="2" fill="#a179ae"/><path d="M8 16h8M9 18v3" stroke="#e7c5d9" stroke-width=".7"/><path d="M11 19l1-1 1 1-1 1Z" fill="#e8c98c"/></g>',
-    eyeshadow:'<g stroke="none"><ellipse cx="10" cy="15" rx="9" ry="7" fill="#d7b574"/><ellipse cx="10" cy="14" rx="8" ry="5.5" fill="#f4e2b9"/><ellipse cx="10" cy="14" rx="6.4" ry="3.7" fill="#bf9bcc"/><path d="M7 12l2 1-1 2" fill="#dcc2e5"/><g transform="rotate(30 17 10)"><rect x="15.5" y="5" width="3" height="17" rx="1.5" fill="#a880b5"/><rect x="14.8" y="5" width="4.4" height="5" rx="1" fill="#e5c689"/><ellipse cx="17" cy="4" rx="3.8" ry="4.5" fill="#d5a4c2"/></g></g>',
-      eyeliner: '沿上眼皮慢慢描畫，也能畫出翹翹的眼尾。<br>細筆刷適合精緻眼線，粗筆刷更容易上手。',
-      blush: '在兩頰畫小圈圈，慢慢疊上紅潤的顏色。<br>取消左右一起畫，就能分開畫每一邊。',
+      lipstick: '在嘴唇上慢慢塗，顏色只會留在嘴唇裡。<br>換個顏色，也能疊出自己的妝容。',
+      eyeshadow: '在眼皮上輕輕畫，試試夢幻的眼影。<br>勾選「兩眼一起畫」，兩邊就能同步。',
+      eyeliner: '沿著上眼皮慢慢描畫，也能畫出翹翹的眼尾。<br>可以調整筆刷大小。',
+      blush: '在兩頰畫小圈圈，慢慢疊上紅潤的顏色。<br>取消「兩頰一起畫」就能分開畫。',
       accessories: '點選就能戴上，不同類別可以一起搭配。<br>選「不戴」可取下，也能按上一步復原。',
-    scissors:'<g stroke-width="1.7"><path d="M10 12L3 2M14 12l7-10" stroke="#a2a6bc"/><path d="M10 12l7 8M14 12l-7 8" stroke="#b990bb"/><ellipse cx="5" cy="19" rx="3" ry="4" stroke="#b990bb" fill="#f5e6f5"/><ellipse cx="19" cy="19" rx="3" ry="4" stroke="#b990bb" fill="#f5e6f5"/><circle cx="12" cy="11" r="1.8" fill="#e8c687" stroke="#ca9d60"/><path d="M5 4l4 6M19 4l-4 6" stroke="#edf0f8" stroke-width=".7"/></g>',
-      dryer: '選造型，在想整理的髮束上按住。<br>放開會定型，Undo 可以復原。'
+      scissors: '在兩側長髮或瀏海上滑動剪刀。<br>剪短了也能按上一步，或恢復長髮。',
+      dryer: '選造型，在想整理的髮束上按住。<br>放開會定型，上一步可以復原。',
+      dye: '點選髮色，就能幫整頭秀髮換顏色。<br>保留剪髮與吹整造型，也能復原。'
     };
     $('tool-hint').innerHTML = hints[next];
     if (painting) {
@@ -184,6 +194,18 @@
     }
     render();
   }
+  function syncDye() {
+    document.querySelectorAll('[data-dye]').forEach(b => b.setAttribute('aria-pressed',String(state.hairColor === b.dataset.dye)));
+    $('hair-color-name').textContent = C.hairColors.find(c=>c[0]===state.hairColor)[1];
+    $('restore-color').disabled = state.hairColor === 'gold';
+  }
+  function dye(id) { cancel(); state.hairColor=id; commit(); syncDye(); render(); }
+  $('hair-colors').replaceChildren(...C.hairColors.map(([id,label,color])=>{
+    const b=document.createElement('button');b.type='button';b.className='dye-choice';b.dataset.dye=id;
+    b.style.setProperty('--swatch',color);b.innerHTML='<i aria-hidden="true"></i><span>'+label+'</span>';
+    b.setAttribute('aria-label',label);b.onclick=()=>dye(id);return b;
+  }));
+  $('restore-color').onclick=()=>dye('gold');
   function syncAccessories() {
     document.querySelectorAll('[data-accessory]').forEach(b => b.setAttribute('aria-pressed',String(state.accessories[accessorySlot] === b.dataset.accessory)));
     const current = C.accessories[accessorySlot].find(([id])=>id === state.accessories[accessorySlot]);
@@ -207,6 +229,7 @@
   $('mirror-eyes').onchange = () => render();
   $('wind-power').oninput = () => { $('wind-name').value = Number($('wind-power').value) < .8 ? 'Gentle' : Number($('wind-power').value) > 1.1 ? 'Whoosh!' : 'Breezy'; };
   $('dryer-toggle').onclick = () => {
+    if (!assetsReady) return;
     if (dryerOn) stopDryer();
     else { startStyling(); dryerOn = true; }
     $('dryer-toggle').setAttribute('aria-pressed', String(dryerOn)); $('dryer-label').textContent = dryerOn ? 'Finish · 完成定型' : 'Turn on · 持續造型';
@@ -227,6 +250,7 @@
   $('reset-style').onclick = () => replace({...C.clone(state), styles: C.fresh().styles});
   $('reset').onclick = () => { replace(C.fresh()); status('全新的一天！上一步仍能回到剛才的造型'); };
   $('photo').onclick = () => {
+    if (!assetsReady) return;
     cancel();
     const photo = document.createElement('canvas'); photo.width = 1200; photo.height = 1440;
     const art = new SalonRenderer.Renderer(photo); art.rebuild(state); art.render(state, C.newMotion(), {tool: 'photo'});

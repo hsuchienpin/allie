@@ -10,6 +10,12 @@
   const paintTools = ['lipstick', 'eyeshadow', 'eyeliner', 'blush'];
   const isPaint = tool => paintTools.includes(tool);
   const brushRange = tool => tool === 'eyeliner' ? [2, 14] : tool === 'blush' ? [20, 70] : [8, 50];
+  const hairColors = [
+    ['gold', '原本金髮', '#e8bc75'], ['brown', '栗子棕', '#885038'],
+    ['black', '星夜黑', '#343443'], ['pink', '玫瑰粉', '#e78cb4'],
+    ['purple', '薰衣草紫', '#a484d1'], ['blue', '天空藍', '#70acd7'],
+    ['mint', '薄荷綠', '#80c9b3'], ['silver', '月光銀', '#d4d4e1']
+  ];
   const accessories = {
     head: [['none', '不戴皇冠'], ['tiara', '水晶皇冠'], ['royal', '玫瑰王冠'], ['flowers', '花朵花環']],
     clip: [['none', '不戴髮飾'], ['bow', '緞帶蝴蝶結'], ['butterfly', '寶石蝴蝶'], ['rose', '玫瑰髮夾']],
@@ -19,22 +25,20 @@
   const view = tool => isPaint(tool) ? {scale: 1.5, x: -150, y: -105} : {scale: 1, x: 0, y: 0};
   function hair() {
     const strands = [];
-    // Behind the face and neck. Every hanging ribbon has its own cut length.
+    // Non-overlapping texture strips cover the source hair exactly. Keep the 68
+    // stable IDs so existing cuts/styles can be loaded with the new artwork.
     for (let i = 0; i < 34; i++) {
-      const x = 169 + i * 7.95, side = x < 300 ? -1 : 1;
-      strands.push({id: strands.length, layer: 'back', x, y: 189 - Math.sin(i / 33 * Math.PI) * 65,
-        full: 408 + Math.sin(i / 33 * Math.PI) * 38, width: 19, side, phase: side < 0 ? .3 : .7, length: 1});
+      const width = 240 / 34, x = 180 + (i + .5) * width, side = x < 300 ? -1 : 1;
+      strands.push({id: strands.length, layer: 'back', x, y: 230, full: 430, width, side, length: 1});
     }
     for (const side of [-1, 1]) for (let i = 0; i < 8; i++) {
-      strands.push({id: strands.length, layer: 'side', x: side < 0 ? 174 + i * 5 : 426 - i * 5,
-        y: 167 + i * 5, full: 440 - i * 7, width: 18,
-        side, phase: side < 0 ? .3 : .7, length: 1});
+      const width = 138 / 8;
+      strands.push({id: strands.length, layer: 'side', x: side < 0 ? 42 + (i + .5) * width : 558 - (i + .5) * width,
+        y: 130, full: 530, width, side, length: 1});
     }
     for (let i = 0; i < 18; i++) {
-      const x = 211 + i * 10.5;
-      strands.push({id: strands.length, layer: 'fringe', x, y: 126 - Math.sin(i / 17 * Math.PI) * 28,
-        full: 58 + i * 2.3, width: 18,
-        side: 1, phase: .4, length: 1});
+      const width = 240 / 18, x = 180 + (i + .5) * width;
+      strands.push({id: strands.length, layer: 'fringe', x, y: 130, full: 100, width, side: x < 300 ? -1 : 1, length: 1});
     }
     return strands;
   }
@@ -46,10 +50,11 @@
     outward: {straight: .35, curl: 1, volume: 0},
     volume: {straight: 0, curl: 0, volume: 1}
   };
-  function fresh() { return {version: 3, lengths: template.map(() => 1), styles: template.map(naturalStyle), strokes: [], accessories: {head: 'tiara', clip: 'none', ears: 'none', neck: 'none'}}; }
+  function fresh() { return {version: 4, hairColor: 'gold', lengths: template.map(() => 1), styles: template.map(naturalStyle), strokes: [], accessories: {head: 'tiara', clip: 'none', ears: 'none', neck: 'none'}}; }
   function normalize(value) {
     const result = fresh();
-    if (!value || ![1, 2, 3].includes(value.version)) return result;
+    if (!value || ![1, 2, 3, 4].includes(value.version)) return result;
+    if (hairColors.some(([id]) => id === value.hairColor)) result.hairColor = value.hairColor;
     if (Array.isArray(value.lengths)) result.lengths = template.map((_, i) =>
       Number.isFinite(value.lengths[i]) ? clamp(value.lengths[i], .16, 1) : 1);
     if (value.version >= 2 && Array.isArray(value.styles)) result.styles = template.map((_, i) => {
@@ -64,28 +69,56 @@
         .map(p => [clamp(p[0], -80, W + 80), clamp(p[1], -80, H + 80)]);
       return points.length ? [{tool: s.tool, color: s.color, size: clamp(Number(s.size) || 20, ...brushRange(s.tool)), mirror: s.tool !== 'lipstick' && !!s.mirror, points}] : [];
     });
-    if (value.version === 3 && value.accessories && typeof value.accessories === 'object') {
+    if (value.version >= 3 && value.accessories && typeof value.accessories === 'object') {
       for (const [slot, items] of Object.entries(accessories)) {
         if (items.some(([id]) => id === value.accessories[slot])) result.accessories[slot] = value.accessories[slot];
       }
     }
+    // Reposition older makeup around the larger eyes and rounder cheeks.
+    if (value.version < 4) for (const stroke of result.strokes) {
+      const map = stroke.tool === 'lipstick' ? [1.12, 395, 383, .94] :
+        stroke.tool === 'blush' ? [1.35, 350, 350, 1.05] : [1.18, 291, 280, 1.15];
+      stroke.points = stroke.points.map(([x, y]) => [clamp(300 + (x - 300) * map[0], -80, W + 80), clamp(map[2] + (y - map[1]) * map[3], -80, H + 80)]);
+    }
     return result;
   }
+  const sourcePoint = (strand, t) => ({x: strand.x, y: strand.y + strand.full * t});
+  let visibleHair = null;
+  const setHairVisibility = sample => { visibleHair = sample; };
   function point(strand, t, bend = 0, style) {
-    const sweep = strand.layer === 'fringe' ? strand.side * 28 * Math.sin(t * 1.3) :
-      strand.side * (23 * Math.sin(t * Math.PI * .65) + 10 * t) + Math.sin(t * 5 + strand.phase) * 8 * t;
+    const sweep = strand.side * (strand.layer === 'fringe' ? 15 * Math.sin(t * 1.3) : 23 * Math.sin(t * Math.PI * 3) * t);
     const straight = style?.straight || 0, curl = style?.curl || 0, volume = style?.volume || 0;
     // The styled extent is retained when cutting, so scissors remove the actual curved tip.
     const extent = style?.extent || 1, u = clamp(t / extent, 0, 1), arc = clamp((u - .52) / .48, 0, 1) * 2.4;
-    const radius = Math.min(66, strand.full * extent * .22);
+    const radius = Math.min(30, strand.full * extent * .22);
     const curlX = strand.side * curl * radius * (1 - Math.cos(arc));
     const curlY = -Math.abs(curl) * radius * (arc - Math.sin(arc));
     const lift = Math.sin(u * Math.PI);
-    return {x: strand.x + sweep * (1 - straight) + curlX + strand.side * volume * (65 * lift + 9 * u) + bend * t * t,
+    return {x: strand.x - sweep * straight + curlX + strand.side * volume * (32 * lift + 5 * u) + bend * t * t,
       y: strand.y + strand.full * t + curlY - volume * 24 * lift - Math.abs(bend) * .12 * t * t};
   }
   function samples(strand, length, bend = 0, style) {
     return Array.from({length: 37}, (_, i) => { const t = length * i / 36; return {...point(strand, t, bend, style), t}; });
+  }
+  const neighbors = new Map();
+  function deformedPoint(state,motion,x,y) {
+    // Adjacent texture cells share a continuous deformation field. Independent
+    // cuts remain possible without exposing cracks between differently styled locks.
+    if(!neighbors.has(x)) neighbors.set(x,template.filter(s=>Math.abs(s.x-x)<Math.max(48,s.width)));
+    let dx=0,dy=0,total=0;
+    for(const s of neighbors.get(x)) {
+      let weight=(1-Math.abs(s.x-x)/Math.max(48,s.width))**2*s.width;
+      const lower=clamp((y-200)/60,0,1);
+      if(s.layer==='back')weight*=lower;
+      if(s.layer==='fringe')weight*=1-lower;
+      if(!weight)continue;
+      const t=clamp((y-s.y)/s.full,0,1),p=point(s,t,motion[s.id]?.bend||0,state.styles[s.id]),src=sourcePoint(s,t);
+      dx+=(p.x-src.x)*weight;dy+=(p.y-src.y)*weight;total+=weight;
+    }
+    return {x:x+(total?dx/total:0),y:y+(total?dy/total:0)};
+  }
+  function visibleSamples(state,motion,strand,length) {
+    return Array.from({length:37},(_,i)=>{const t=length*i/36,p=sourcePoint(strand,t);return {...deformedPoint(state,motion,p.x,p.y),t};});
   }
   function distanceToSegment(p, a, b) {
     const dx = b.x - a.x, dy = b.y - a.y, length = dx * dx + dy * dy;
@@ -94,19 +127,26 @@
   }
   // Occluded back hair cannot be cut by touching the face or neck.
   function covered(x, y) {
-    return ((x - 300) / 120) ** 2 + ((y - 305) / 171) ** 2 < 1 ||
-      (y > 443 && y < 574 && x > 261 && x < 339);
+    return ((x - 300) / 124) ** 2 + ((y - 320) / 120) ** 2 < 1 ||
+      (y > 440 && y < 510 && x > 256 && x < 344);
   }
+  const cutGeometry = new WeakMap();
   function cut(state, motion, p, radius = 12) {
     const removed = [];
+    const key=JSON.stringify([state.styles,motion.map(m=>m.bend)]);
+    let geometry=cutGeometry.get(state);
+    if(!geometry||geometry.key!==key){geometry={key,lines:template.map(s=>visibleSamples(state,motion,s,1))};cutGeometry.set(state,geometry);}
     for (const s of template) {
-      if (s.layer === 'back' && covered(p.x, p.y)) continue;
-      const length = state.lengths[s.id], bend = motion[s.id]?.bend || 0, style = state.styles?.[s.id], list = samples(s, length, bend, style);
+      if (!visibleHair && s.layer === 'back' && covered(p.x, p.y)) continue;
+      const length = state.lengths[s.id], bend = motion[s.id]?.bend || 0, style = state.styles?.[s.id];
+      const list=geometry.lines[s.id].filter(p=>p.t<length),end=sourcePoint(s,length);
+      list.push({...deformedPoint(state,motion,end.x,end.y),t:length});
       let next = length;
       for (let i = 1; i < list.length; i++) {
         const hit = distanceToSegment(p, list[i - 1], list[i]);
         if (hit.distance <= radius + s.width * .35) {
           const t = list[i - 1].t + (list[i].t - list[i - 1].t) * hit.t;
+          if (visibleHair && !visibleHair(s, t)) continue;
           next = Math.min(next, clamp(t, .16, 1));
         }
       }
@@ -124,11 +164,12 @@
     const dt = Math.min(seconds, .05), power = clamp(Number(wind.power) || 1, .4, 1.4);
     let changed = 0;
     for (const strand of template) {
-      const old = state.styles[strand.id], list = samples(strand, state.lengths[strand.id], motion[strand.id]?.bend || 0, old);
+      const old = state.styles[strand.id], list = visibleSamples(state,motion,strand,state.lengths[strand.id]);
       let distance = Infinity;
       for (let i = 1; i < list.length; i++) {
         const a = list[i - 1], b = list[i];
-        if (strand.layer === 'back' && covered((a.x + b.x) / 2, (a.y + b.y) / 2)) continue;
+        if (visibleHair && !visibleHair(strand, (a.t + b.t) / 2)) continue;
+        if (!visibleHair && strand.layer === 'back' && covered((a.x + b.x) / 2, (a.y + b.y) / 2)) continue;
         distance = Math.min(distance, distanceToSegment(wind, a, b).distance);
       }
       // A small brush radius lets the two sides be styled independently.
@@ -177,5 +218,5 @@
     undo() { if (!this.past.length) return false; this.future.push(this.current); this.current = this.past.pop(); return true; }
     redo() { if (!this.future.length) return false; this.past.push(this.current); this.current = this.future.pop(); return true; }
   }
-  return {W, H, MAX_STROKES, template, clamp, clone, view, isPaint, brushRange, accessories, fresh, normalize, point, samples, cut, covered, newMotion, styleAt, advance, interpolate, History};
+  return {W, H, MAX_STROKES, template, clamp, clone, view, isPaint, brushRange, accessories, hairColors, fresh, normalize, sourcePoint, deformedPoint, setHairVisibility, point, samples, cut, covered, newMotion, styleAt, advance, interpolate, History};
 });

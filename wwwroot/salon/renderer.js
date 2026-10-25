@@ -2,11 +2,10 @@
   'use strict';
   const C = SalonCore;
   const paths = {
-    face: new Path2D('M191 240C181 158 236 133 300 137C365 132 417 172 409 250L406 330C401 398 350 468 300 475C247 467 200 400 194 333Z'),
-    lipstick: new Path2D('M265 393Q277 388 286 382Q293 380 300 386Q307 380 314 382Q325 389 335 393Q320 414 300 415Q279 413 265 393Z'),
-    eyeshadow: new Path2D('M211 291C212 249 268 242 283 284Q254 298 211 291ZM317 284C332 242 388 249 389 291Q346 298 317 284Z'),
-    eyeliner: new Path2D('M198 279Q209 290 214 293Q245 269 283 295L281 300Q246 277 216 303Q204 298 198 279ZM402 279Q391 290 386 293Q355 269 317 295L319 300Q354 277 384 303Q396 298 402 279Z'),
-    blush: new Path2D('M201 350C201 320 269 317 279 347C286 384 213 386 201 350ZM399 350C399 320 331 317 321 347C314 384 387 386 399 350Z')
+    lipstick: new Path2D('M262 374Q278 375 290 370Q296 368 300 372Q305 368 312 371Q329 377 338 374Q324 397 301 398Q279 398 262 374Z'),
+    eyeshadow: new Path2D('M190 264C200 241 244 239 267 274L262 280C246 260 221 256 198 273ZM410 264C400 241 356 239 333 274L338 280C354 260 379 256 402 273Z'),
+    eyeliner: new Path2D('M176 270Q187 278 200 267C218 251 241 255 262 283L264 289C241 265 218 260 201 276Q185 287 176 270ZM424 270Q413 278 400 267C382 251 359 255 338 283L336 289C359 265 382 260 399 276Q415 287 424 270Z'),
+    blush: new Path2D('M175 343C175 315 258 318 269 345C278 381 188 386 175 343ZM425 343C425 315 342 318 331 345C322 381 412 386 425 343Z')
   };
   const shape = (ctx, path, color, stroke, width = 1) => {
     ctx.fillStyle = color; ctx.fill(path);
@@ -90,75 +89,11 @@
         else for (const p of stroke.points) this.dab(stroke, p[0], p[1]);
       }
     }
-    hair(ctx, strand, length, bend, from = 0, style) {
-      const points = C.samples(strand, length, bend, style).filter(p => p.t >= from);
-      if (points.length < 2) return;
-      const first = points[0], last = points[points.length - 1];
-      const g = gradient(ctx, first.x, first.y, last.x, last.y,
-        [[0, '#c99b61'], [.25, '#f0d095'], [.5, '#e5be7e'], [.72, '#efcd90'], [1, '#cda264']]);
-      const normals = points.map((p, i) => {
-        const a = points[Math.max(0, i - 1)], b = points[Math.min(points.length - 1, i + 1)];
-        const dx = b.x - a.x, dy = b.y - a.y, distance = Math.hypot(dx, dy) || 1;
-        return {x: dy / distance, y: -dx / distance};
-      });
-      ctx.beginPath();
-      for (let i = 0; i < points.length; i++) {
-        const p = points[i], taper = .8 + .2 * (1 - i / points.length), half = strand.width * taper / 2;
-        const n = normals[i];
-        if (i === 0) ctx.moveTo(p.x - n.x * half, p.y - n.y * half); else ctx.lineTo(p.x - n.x * half, p.y - n.y * half);
-      }
-      const end = normals[normals.length - 1];
-      ctx.quadraticCurveTo(last.x - end.y * 6, last.y + end.x * 6, last.x + end.x * strand.width * .4, last.y + end.y * strand.width * .4);
-      for (let i = points.length - 1; i >= 0; i--) {
-        const p = points[i], half = strand.width * (.8 + .2 * (1 - i / points.length)) / 2, n = normals[i]; ctx.lineTo(p.x + n.x * half, p.y + n.y * half);
-      }
-      ctx.closePath(); ctx.fillStyle = g; ctx.fill();
-      ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x - 2, p.y + 2) : ctx.moveTo(p.x - 2, p.y + 2));
-      ctx.strokeStyle = '#fff0c96b'; ctx.lineWidth = 1.05; ctx.stroke();
-      ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x + 4, p.y) : ctx.moveTo(p.x + 4, p.y));
-      ctx.strokeStyle = '#94653735'; ctx.lineWidth = .8; ctx.stroke();
-    }
     face(ctx) {
-      const neck = new Path2D('M263 428L263 539Q261 558 272 572Q300 589 328 572Q339 558 337 539L337 428Z');
-      shape(ctx, neck, gradient(ctx, 264, 455, 327, 570, [[0, '#dca18d'], [.4, '#f5c9b4'], [1, '#ffe2cb']]));
-      line(ctx, 'M268 478Q299 502 332 478', '#cd977e55', 2);
-      for (const side of [-1, 1]) {
-        ellipse(ctx, 300 + side * 111, 314, 20, 34, '#f0bca8');
-        line(ctx, `M${300 + side * 115} 298q${side * 13} 8 0 26`, '#ce9585', 2);
-      }
-      shape(ctx, paths.face, gradient(ctx, 192, 245, 416, 340, [[0, '#eab59e'], [.22, '#fbd7bf'], [.5, '#ffe9d5'], [.78, '#f8d0b9'], [1, '#e6ae99']]), '#c9897c38');
-      ctx.save(); ctx.clip(paths.face);
-      glow(ctx, 231, 354, 37, '#ed9ba62c'); glow(ctx, 368, 354, 37, '#ed9ba62c');
-      glow(ctx, 297, 210, 65, '#fff8df35'); glow(ctx, 300, 418, 38, '#ffe7c950');
-      ctx.restore();
-      this.flushBlush();ctx.drawImage(this.blush,0,0);ctx.drawImage(this.makeup, 0, 0);
-    }
-    details(ctx, closed) {
-      // Tapered storybook brows and jewel-like irises share the original paint landmarks.
-      shape(ctx,new Path2D('M211 250Q243 231 276 248L274 252Q242 242 211 253Z'),'#a27654');
-      shape(ctx,new Path2D('M389 250Q357 231 324 248L326 252Q358 242 389 253Z'),'#a27654');
-      for (const x of [247, 353]) {
-        if (closed) {
-          line(ctx, `M${x - 32} 299Q${x} 315 ${x + 32} 299`, '#5d4141', 3.6);
-          const sign = x < 300 ? -1 : 1;
-          for (let i = 0; i < 3; i++) line(ctx, `M${x + sign * (20 + i * 5)} ${303 - i * 2}l${sign * 5} 6`, '#5d4141', 2);
-        } else {
-          const eye = new Path2D(`M${x - 33} 300Q${x - 4} 272 ${x + 32} 299Q${x + 4} 333 ${x - 33} 300Z`);
-          shape(ctx, eye, '#fff9eb'); ctx.save(); ctx.clip(eye);
-          ellipse(ctx, x, 301, 17, 23, gradient(ctx, x, 278, x, 324, [[0, '#49385f'], [.45, '#8675b8'], [.75, '#b6a0d9'], [1, '#ddc9ec']]));
-          for(let i=0;i<12;i++){const a=i*Math.PI/6;line(ctx,`M${x+Math.cos(a)*10} ${302+Math.sin(a)*12}L${x+Math.cos(a)*15} ${302+Math.sin(a)*20}`,'#f3dded70',.9);}
-          ellipse(ctx, x, 299, 8, 14, '#3b304c'); ellipse(ctx, x-6, 290, 5, 5.7, '#fffef9'); ellipse(ctx, x+6, 310, 2.6, 2.6, '#fffdf3dd');
-          ctx.restore(); line(ctx, `M${x - 33} 300Q${x - 4} 272 ${x + 32} 299`, '#65505c', 2.6);
-          line(ctx, `M${x - 29} 305Q${x} 332 ${x + 28} 304`, '#bb8c90', 1.1);
-          const sign = x < 300 ? -1 : 1;
-          for (let i = 0; i < 4; i++) line(ctx, `M${x + sign * (19 + i * 4)} ${292 + i*2}q${sign * 7} -1 ${sign * 9} -8`, '#65505c', 1.9);
-        }
-      }
-      line(ctx, 'M300 313Q294 338 293 348Q299 356 309 349', '#d29b80', 1.7);
-      line(ctx, 'M286 357Q291 362 296 359M305 359Q310 362 314 356', '#c78e7a88', 1.4);
-      line(ctx, 'M268 394Q284 397 300 395Q317 397 332 394', '#9e52675c', 1.6);
-      line(ctx, 'M284 405Q300 409 314 404', '#ffe3d17a', 2.7);
-      glow(ctx,300,343,8,'#fff6e780');
+      if (!SalonHair.loaded) return;
+      ctx.drawImage(SalonHair.face, 68, 33, 464, 512);
+      this.flushBlush(); ctx.drawImage(this.blush,0,0);
+      ctx.save(); ctx.globalCompositeOperation='multiply'; ctx.drawImage(this.makeup,0,0); ctx.restore();
       ctx.drawImage(this.liner,0,0);
     }
     tool(ctx, tool, p, time) {
@@ -200,26 +135,13 @@
         line(ctx,`M${x-r} ${y}Q${x} ${y} ${x} ${y-r*1.5}Q${x} ${y} ${x+r} ${y}Q${x} ${y} ${x} ${y+r*1.5}Q${x} ${y} ${x-r} ${y}`,'#c9ab6c99',1.3);
       }
       const view = C.view(options.tool); ctx.translate(view.x, view.y); ctx.scale(view.scale, view.scale);
-      shape(ctx, new Path2D('M154 299Q132 87 256 77Q405 43 446 213L449 342Q401 395 300 377Q181 392 154 299Z'), gradient(ctx,155,180,445,230,[[0,'#a97747'],[.3,'#e2bd7e'],[.6,'#f1d49a'],[1,'#b68a50']]));
-      for (const s of C.template.filter(s => s.layer === 'back')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend, 0, state.styles[s.id]);
       this.face(ctx);
-      // The base lip color belongs beneath the paint, drawn on the face itself.
-      ctx.save(); ctx.clip(paths.lipstick); ctx.fillStyle = gradient(ctx,300,381,300,416,[[0,'#d78a9c'],[.5,'#e8a5af'],[1,'#f1b9bd']]); ctx.fillRect(260, 376, 80, 45); ctx.drawImage(this.makeup, 0, 0); ctx.restore();
-      this.details(ctx, false);
-      for (const s of C.template.filter(s => s.layer === 'side')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend, 0, state.styles[s.id]);
-      // Swept crown roots blend into independently trimmable fringe tips.
-      shape(ctx, new Path2D('M160 246Q144 112 245 88Q355 57 414 151Q352 105 285 123Q221 136 195 232L181 269Z'), gradient(ctx,172,100,382,200,[[0,'#ba8a51'],[.4,'#eac686'],[.65,'#f5dba0'],[1,'#c99d60']]));
-      for (const s of C.template.filter(s => s.layer === 'fringe')) this.hair(ctx, s, state.lengths[s.id], motion[s.id].bend * .35, 0, state.styles[s.id]);
-      line(ctx,'M172 204Q179 115 264 100M180 217Q192 133 268 111M303 103Q361 83 399 141','#fff2ca90',1.5);
+      SalonHair.draw(ctx,state,motion,options.chips);
       const a=state.accessories||{};
-      SalonArt.draw(ctx,a.head,206,30,188,141);
-      SalonArt.draw(ctx,a.clip,366,182,86,65);
-      for(const x of [185,415])SalonArt.draw(ctx,a.ears,x-28,320,56,62);
-      SalonArt.draw(ctx,a.neck,251,487,98,74);
-      for (const chip of options.chips || []) {
-        ctx.save(); ctx.translate(chip.dx, chip.dy); ctx.globalAlpha = Math.max(0, 1 - chip.age / 1.2);
-        this.hair(ctx, chip.strand, chip.to, chip.bend, chip.from, chip.style); ctx.restore();
-      }
+      SalonHair.jewel(ctx,a.head,204,23,192,128);
+      SalonHair.jewel(ctx,a.clip,407,169,75,64);
+      for(const x of [174,426]) SalonHair.jewel(ctx,a.ears,x-24,333,48,59);
+      SalonHair.jewel(ctx,a.neck,250,459,100,67);
       if (options.pointer) {
         const p = options.pointer;
         if (C.isPaint(options.tool)) {
